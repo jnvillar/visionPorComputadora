@@ -3,11 +3,21 @@ img2 = imread('imgs/img.png');
 
 % Ej 1
 
-suma = imgSum(img1,img2);
-resta = imgSub(img1,img2);
+sum = imgSum(img1,img2);
+figure(1),title("Suma imagen"),imshow(sum)
 
+sub = imgSub(img1,img2);
+figure(2),title("Resta imagen"),imshow(sub)
+
+prod = imgProd(img1,img2);
+figure(3),title("Prod imagen"),imshow(prod);
+
+
+scalar = imgScalarProduct(img1,3);
+figure(4),title("Producto escalar imagen"),imshow(scalar);
 
 % Ej 2
 
 neg = imgNeg(img1);
+figure(5),title("Imagen en negativo"),imshow(neg)
 
