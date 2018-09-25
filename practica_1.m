@@ -23,6 +23,16 @@ if(show), figure(4),title("Producto escalar imagen"),imshow(scalar), end
 neg = imgNeg(img1);
 if(show), figure(5),title("Imagen en negativo"),imshow(neg), end
 
+% Ej 3
+
+imgThresh = imgThresholding(bw, 100);
+if(1), figure(6),title("Imagen con umbral"),imshow(imgThresh), end
+
+
+% Ej 4
+
+vector = imgHist(bw);
+if(show), figure(7),title("Histograma"),histogram(vector), end
 
 
 
