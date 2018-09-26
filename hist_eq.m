@@ -11,10 +11,6 @@ for i=1:X
         for h=1:gray_level
              acum = acum + hist(h);
         end
-        if gray_level == 245
-            disp("okaaa");
-            disp(acum);
-        end
         res(i,j) = acum/total_pixels;
     end
 end
