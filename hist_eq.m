@@ -17,6 +17,4 @@ end
 sk_min = min(min(res));
 res = (254/(1-sk_min)).*(res-sk_min)+0.5;
 res = uint8(res);
-hist_res = imgHist(res);
-bar(hist_res);
 end
