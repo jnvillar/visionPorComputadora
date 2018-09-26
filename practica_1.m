@@ -33,12 +33,13 @@ if(show), figure(7),title("Imagen con umbral"),imshow(imgThresh), end
 % Ej 4
 
 planes = cat(2, imgBitPlane(bw, 1), imgBitPlane(bw, 2), imgBitPlane(bw, 3), imgBitPlane(bw, 4), imgBitPlane(bw, 5), imgBitPlane(bw, 6), imgBitPlane(bw, 7), imgBitPlane(bw, 8));
+
 if(show), figure(8),title("Bit Planes de una imagen"),imshow(planes), end
 
 % Ej 5
 
 vector = imgHist(bw);
-if(show), figure(9),title("Histograma"),histogram(vector), end
+if(1), figure(9),title("Histograma"),bar(vector), end
 
 
 
