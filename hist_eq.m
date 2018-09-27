@@ -1,17 +1,22 @@
 function [res]=hist_eq(img)
-hist = imgHist(img);
+[X, Y, Z] = size(img);
+histograms_by_color = zeros(Z, 256);
+for i=1:Z
+    histograms_by_color(i,:) = imgHist(img(:,:,i));
+end
 
-[X, Y] = size(img);
 total_pixels = X*Y;
-
+res = zeros(X,Y,Z);
 for i=1:X
     for j=1:Y
-        gray_level = img(i,j);
-        acum = 0;
-        for h=1:gray_level
-             acum = acum + hist(h);
+        for k=1:Z
+            gray_level = img(i,j, k);
+            acum = 0;
+            for h=1:gray_level
+                acum = acum + histograms_by_color(k, h);
+            end
+            res(i,j,k) = acum/total_pixels;
         end
-        res(i,j) = acum/total_pixels;
     end
 end
 sk_min = min(min(res));
