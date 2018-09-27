@@ -58,5 +58,4 @@ imgEqualizationDoble = imgHistEqualization(imgEqualization);
 if(show), figure('Name', 'Ecualización por histograma aplicada 2 veces'), imshow([bw, imgEqualizationDoble]), end
 
 % Al aplicar por segunda vez la ecualización por histograma observamos que
-% la imagen no se modifica. Por lo tanto el histograma obtenido en ambos
-% casos el mismo, y por ende también la función de distribución acumulada.
+% la imagen no se modifica.
