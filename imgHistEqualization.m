@@ -1,4 +1,4 @@
-function f = imgHistEquialization(img)
+function f = imgHistEqualization(img)
     [X, Y, Z] = size(img);
     histograms_by_color = zeros(Z, 256);
     for i=1:Z
