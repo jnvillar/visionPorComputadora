@@ -28,7 +28,7 @@ if(show), figure('Name','Apply multiple functions to saturation'), imshow([img1,
 
 % a
 increase_hue_by_small_constant = map_hue(img1, add_constant_function(0.08));
-increase_hue_by_big_constant = map_hue(img1, add_constant_function(5));
+increase_hue_by_big_constant = map_hue(img1, add_constant_function(0.7));
 if(show), figure('Name','Reduce and Increase hue'), imshow([img1, increase_hue_by_small_constant, increase_hue_by_big_constant]), end
 
 % Ejercicio 3
