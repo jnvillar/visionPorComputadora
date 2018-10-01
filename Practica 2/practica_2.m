@@ -21,7 +21,7 @@ apply_square_root_to_saturation = map_saturation(img1, exponencial_function(0.5)
 apply_sin_to_saturation = map_saturation(img1, sin_function());
 apply_cos_to_saturation = map_saturation(img1, cos_function());
 apply_tan_to_saturation = map_saturation(img1, tan_function());
-if(show), figure('Name','Reduce and Increase saturation by ^2'), imshow([img1, apply_tan_to_saturation,apply_cos_to_saturation,apply_sin_to_saturation,apply_cuadratic_function_to_saturation,apply_exponencial_function_to_saturation,apply_log_function_to_saturation,apply_square_root_to_saturation]), end
+if(show), figure('Name','Apply multiple functions to saturation'), imshow([img1, apply_tan_to_saturation,apply_cos_to_saturation,apply_sin_to_saturation,apply_cuadratic_function_to_saturation,apply_exponencial_function_to_saturation,apply_log_function_to_saturation,apply_square_root_to_saturation]), end
 
 % Ejercicio 2
 % a
