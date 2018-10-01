@@ -36,13 +36,13 @@ if(show), figure('Name','Show hsi planes img1'), imshow(separate_planes(img1)), 
 if(show), figure('Name','Show hsi planes img2'), imshow(separate_planes(img2)), end
 if(show), figure('Name','Show hsi planes img3'), imshow(separate_planes(img3)), end
 
-% Se puede obserbar que en el canal de intensidad es donde se pueden
+% Se puede observar que en el canal de intensidad es donde se pueden
 % observar los detalles de la imagen. Idem para la granularidad
 
 % b
 if (show), figure('Name','Show hsi planes dif'), imshow(separate_planes(dif)), end
 
-% Se puede obserbar que en el canal de saturacion se pueden obserbar mejor
+% Se puede observar que en el canal de saturacion se pueden observar mejor
 % los bordes de una imagen difuminada
 
 
