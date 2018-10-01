@@ -1,6 +1,11 @@
-img1 = imread('imgs/river1.jpg');
 addpath('./Practica 2/functions');
+img1 = imread('imgs/river1.jpg');
+img2 = imread('imgs/fruit.png');
+img3 = imread('imgs/colors.jpg');
+
+
 show = 1;
+
 
 % Ejercicio 1
 % a
@@ -23,6 +28,26 @@ if(show), figure('Name','Reduce and Increase saturation by ^2'), imshow([img1, a
 increase_hue_by_small_constant = map_hue(img1, add_constant_function(0.08));
 increase_hue_by_big_constant = map_hue(img1, add_constant_function(5));
 if(show), figure('Name','Reduce and Increase hue'), imshow([img1, increase_hue_by_small_constant, increase_hue_by_big_constant]), end
+
+
+
+% Ejercicio 3
+if(show), figure('Name','Show hsi planes'), imshow(separate_planes(img1)), end
+if(show), figure('Name','Show hsi planes'), imshow(separate_planes(img2)), end
+if(show), figure('Name','Show hsi planes'), imshow(separate_planes(img3)), end
+
+function res=imgChangeSaturation(img, f)
+    hsvImg = rgb2hsv(img);
+    hsvImg(:,:,2) = f(hsvImg(:,:,2));
+    hsvImg(hsvImg > 1) = 1;
+    res = uint8(hsv2rgb(hsvImg)*256);
+end
+
+
+
+function f=cuadratic_function()
+    f = @(vec) vec.^2;
+end
 
 
 
