@@ -29,13 +29,10 @@ increase_hue_by_small_constant = map_hue(img1, add_constant_function(0.08));
 increase_hue_by_big_constant = map_hue(img1, add_constant_function(5));
 if(show), figure('Name','Reduce and Increase hue'), imshow([img1, increase_hue_by_small_constant, increase_hue_by_big_constant]), end
 
-
-
 % Ejercicio 3
 if(show), figure('Name','Show hsi planes'), imshow(separate_planes(img1)), end
 if(show), figure('Name','Show hsi planes'), imshow(separate_planes(img2)), end
 if(show), figure('Name','Show hsi planes'), imshow(separate_planes(img3)), end
-
 
 
 
