@@ -7,12 +7,11 @@ reduce_saturation = map_saturation(img1,multiply_constant_function(0.5));
 increase_saturation = map_saturation(img1, multiply_constant_function(2));
 if(show), figure('Name','Reduce and Increase saturation'), imshow([img1, reduce_saturation, increase_saturation]), end
 
-% b
+% Ejercicio 2
+% a
 increase_hue_by_small_constant = map_hue(img1, add_constant_function(0.08));
 increase_hue_by_big_constant = map_hue(img1, add_constant_function(5));
 if(show), figure('Name','Reduce and Increase hue'), imshow([img1, increase_hue_by_small_constant, increase_hue_by_big_constant]), end
-
-
 
 
 function res=imgChangeSaturation(img, f)
