@@ -1,4 +1,4 @@
-img1 = imread('imgs/fruit.png');
+img1 = imread('imgs/river1.jpg');
 addpath('./Practica 2/functions');
 show = 1;
 
