@@ -1,4 +1,4 @@
-img1 = imread('imgs/fruit.png');
+img1 = imread('imgs/river1.jpg');
 show = 1;
 
 % Ejercicio 1
