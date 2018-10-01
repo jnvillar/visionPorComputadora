@@ -2,7 +2,7 @@ addpath('./Practica 2/functions');
 img1 = imread('imgs/river1.jpg');
 img2 = imread('imgs/fruit.png');
 img3 = imread('imgs/colors.jpg');
-show = 0;
+show = 1;
 
 % Ejercicio 1
 
@@ -29,10 +29,13 @@ increase_hue_by_big_constant = map_hue(img1, add_constant_function(5));
 if(show), figure('Name','Reduce and Increase hue'), imshow([img1, increase_hue_by_small_constant, increase_hue_by_big_constant]), end
 
 % Ejercicio 3
-if(1), figure('Name','Show hsi planes img1'), imshow(separate_planes(img1)), end
-if(1), figure('Name','Show hsi planes img2'), imshow(separate_planes(img2)), end
-if(1), figure('Name','Show hsi planes img3'), imshow(separate_planes(img3)), end
 
+if(show), figure('Name','Show hsi planes img1'), imshow(separate_planes(img1)), end
+if(show), figure('Name','Show hsi planes img2'), imshow(separate_planes(img2)), end
+if(show), figure('Name','Show hsi planes img3'), imshow(separate_planes(img3)), end
+
+% Se puede obserbar que en el canal de intensidad es donde se pueden
+% observar los detalles de la imagen. Idem para la granularidad
 
 
 
