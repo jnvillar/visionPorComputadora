@@ -42,7 +42,7 @@ if(show), figure('Name','Show hsi planes img3'), imshow(separate_planes(img3)), 
 % b
 if (show), figure('Name','Show hsi planes dif'), imshow(separate_planes(dif)), end
 
-% Se puede obserbar que en el canal de saturacion se pueden obserbar mejor
+% Se puede observar que en el canal de saturacion se pueden observar mejor
 % los bordes de una imagen difuminada
 
 
