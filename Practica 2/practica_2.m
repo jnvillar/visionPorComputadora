@@ -2,7 +2,8 @@ addpath('./Practica 2/functions');
 img1 = imread('imgs/river1.jpg');
 img2 = imread('imgs/fruit.png');
 img3 = imread('imgs/colors.jpg');
-show = 1;
+dif = imread('imgs/difuminada.png');
+show = 0;
 
 % Ejercicio 1
 
@@ -30,12 +31,19 @@ if(show), figure('Name','Reduce and Increase hue'), imshow([img1, increase_hue_b
 
 % Ejercicio 3
 
+% a
 if(show), figure('Name','Show hsi planes img1'), imshow(separate_planes(img1)), end
 if(show), figure('Name','Show hsi planes img2'), imshow(separate_planes(img2)), end
 if(show), figure('Name','Show hsi planes img3'), imshow(separate_planes(img3)), end
 
 % Se puede obserbar que en el canal de intensidad es donde se pueden
 % observar los detalles de la imagen. Idem para la granularidad
+
+% b
+if (show), figure('Name','Show hsi planes dif'), imshow(separate_planes(dif)), end
+
+% Se puede obserbar que en el canal de saturacion se pueden obserbar mejor
+% los bordes de una imagen difuminada
 
 
 
