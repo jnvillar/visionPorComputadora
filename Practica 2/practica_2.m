@@ -5,7 +5,7 @@ img1 = imread('imgs/river1.jpg');
 img2 = imread('imgs/fruit.png');
 img3 = imread('imgs/colors.jpg');
 dif = imread('imgs/difuminada.png');
-show = 0;
+show = 1;
 
 % Ejercicio 1
 
