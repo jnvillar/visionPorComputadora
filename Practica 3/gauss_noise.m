@@ -14,11 +14,11 @@ function f=add_noise(pixel,white_limit,black_limit,  mu, sigma)
        return
    end
    if r > white_limit && r<= black_limit
-      f=255;
+      f=pixel;
       return
    end
    if r>black_limit
-       f=pixel;
+       f=255;
        return
    end
 end

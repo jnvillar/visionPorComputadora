@@ -50,12 +50,23 @@ if(show), figure, imshow([lena_img, res2]); end
 if(show), figure, imshow([lena_img, res3]); end
 
 %Ejercicio 4
-white_limit = 0.3;
-black_limit = 0.6;
+white_limit = -0.7;
+black_limit = 0.7;
 mu = 0;
-sigma = 1;
-lena_gauss_noise = gauss_noise(lena_img,white_limit, black_limit,mu, sigma);
 
-if(1), figure, imshow([lena_img, lena_gauss_noise]); end
+sigma = 1;
+
+lena_gauss_noise = gauss_noise(lena_img,white_limit, black_limit,mu, sigma);
+if(1), figure('Name', "Sigma 1"), imshow([lena_img, lena_gauss_noise]); end
+
+sigma = 2;
+
+lena_gauss_noise = gauss_noise(lena_img,white_limit, black_limit,mu, sigma);
+if(1),  figure('Name', "Sigma 2"), imshow([lena_img, lena_gauss_noise]); end
+
+sigma = 3;
+
+lena_gauss_noise = gauss_noise(lena_img,white_limit, black_limit,mu, sigma);
+if(1),  figure('Name', "Sigma 3"), imshow([lena_img, lena_gauss_noise]); end
 
 
