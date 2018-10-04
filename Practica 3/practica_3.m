@@ -45,11 +45,11 @@ params = containers.Map({'sigma', 'size'}, {5, 30});
 res_unsharp = unsharp_masking(img, params);
 if(show), figure('Name', 'Image unsharp masking'), imshow([img, res_unsharp]), end
 
-if(show), figure, imshow([lena_img, res]); end
-if(show), figure, imshow([lena_img, res2]); end
-if(show), figure, imshow([lena_img, res3]); end
 
 %Ejercicio 4
+
+%a gaussian noise
+
 white_limit = -0.7;
 black_limit = 0.7;
 mu = 0;
@@ -70,3 +70,7 @@ lena_gauss_noise = gauss_noise(lena_img,white_limit, black_limit,mu, sigma);
 if(1),  figure('Name', "Sigma 3"), imshow([lena_img, lena_gauss_noise]); end
 
 
+% Ejercicio 5
+img = lena_img;
+res_median_fitler = median_filter(img, 3);
+if(show), figure('Name', 'Image median filter'), imshow([img, res_median_fitler]), end
