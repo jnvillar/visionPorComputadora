@@ -37,14 +37,23 @@ if(show), figure('Name','High pass filter (3x3 and 5x5)'), imshow([lena_img, hig
 img = lena_img;
 params = containers.Map({'sigma', 'size'}, {5, 30});
 res_smoothing = smoothing(img, params);
-if(show), figure('Name', 'Image smoothing'), imshow([img, res_smoothing]), end
+if(show), figure('Name', 'Image lena smoothing'), imshow([img, res_smoothing]), end
+
+img = test_img;
+params = containers.Map({'sigma', 'size'}, {5, 30});
+res_smoothing = smoothing(img, params);
+if(show), figure('Name', 'Image test smoothing'), imshow([img, res_smoothing]), end
 
 %b
 img = lena_img;
 params = containers.Map({'sigma', 'size'}, {5, 30});
 res_unsharp = unsharp_masking(img, params);
-if(show), figure('Name', 'Image unsharp masking'), imshow([img, res_unsharp]), end
+if(show), figure('Name', 'Image lena unsharp masking'), imshow([img, res_unsharp]), end
 
+img = test_img;
+params = containers.Map({'sigma', 'size'}, {5, 30});
+res_unsharp = unsharp_masking(img, params);
+if(show), figure('Name', 'Image test unsharp masking'), imshow([img, res_unsharp]), end
 
 %Ejercicio 4
 
@@ -80,4 +89,9 @@ if(show), figure('Name', 'Image median filter'), imshow([img, res_median_fitler]
 img = lena_img;
 with_noise = gauss_noise(img, -0.7, 0.7, 0, 0.5);
 res = median_filter(with_noise,3);
-if(show), figure('Name', 'Image with noise median filter'), imshow([img, with_noise, res]), end
+if(show), figure('Name', 'Image lena with noise median filter'), imshow([img, with_noise, res]), end
+
+img = test_img;
+with_noise = gauss_noise(img, -0.7, 0.7, 0, 0.5);
+res = median_filter(with_noise,3);
+if(show), figure('Name', 'Image test with noise median filter'), imshow([img, with_noise, res]), end
