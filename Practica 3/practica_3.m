@@ -2,7 +2,13 @@ filepath = fileparts(mfilename('fullpath'));
 addpath(strcat(filepath, '/../imgs'));
 test_img = imread('imgs/test.png');
 lena_img = imread('imgs/lena.png');
-show = 0;
+show_all = 0;
+show1 = 0;
+show3 = 0;
+show4 = 0;
+show5 = 0;
+show6 = 0;
+show7 = 0;
 
 % Ejercicio 1
 
@@ -10,9 +16,11 @@ show = 0;
 low_pass_filter_3x3 = (1/9).*ones(3);
 low_pass_filter_5x5 = (1/25).*ones(5);
 
-low_pass_filter_3x3_img = image_convolution(lena_img, low_pass_filter_3x3);
-low_pass_filter_5x5_img = image_convolution(lena_img, low_pass_filter_5x5);
-if(show), figure('Name','Low pass filter (3x3 and 5x5)'), imshow([lena_img, low_pass_filter_3x3_img, low_pass_filter_5x5_img]), end
+if (show_all || show1)
+    low_pass_filter_3x3_img = image_convolution(lena_img, low_pass_filter_3x3);
+    low_pass_filter_5x5_img = image_convolution(lena_img, low_pass_filter_5x5);
+    figure('Name','Low pass filter (3x3 and 5x5)'), imshow([lena_img, low_pass_filter_3x3_img, low_pass_filter_5x5_img]);
+end
 
 %b
 duplicate_filter_3x3 = zeros(3);
@@ -23,9 +31,11 @@ duplicate_filter_5x5 = zeros(5);
 duplicate_filter_5x5(3,3) = 2;
 high_pass_filter_5x5 = duplicate_filter_5x5 - low_pass_filter_5x5;
 
-high_pass_filter_3x3_img = image_convolution(lena_img, high_pass_filter_3x3);
-high_pass_filter_5x5_img = image_convolution(lena_img, high_pass_filter_5x5);
-if(show), figure('Name','High pass filter (3x3 and 5x5)'), imshow([lena_img, high_pass_filter_3x3_img, high_pass_filter_5x5_img]), end
+if (show_all || show1)
+    high_pass_filter_3x3_img = image_convolution(lena_img, high_pass_filter_3x3);
+    high_pass_filter_5x5_img = image_convolution(lena_img, high_pass_filter_5x5);
+    figure('Name','High pass filter (3x3 and 5x5)'), imshow([lena_img, high_pass_filter_3x3_img, high_pass_filter_5x5_img]);
+end
 
 % Ejercicio 2
 % Lo implementamos en el ejercicio anterior para poder aplicar los filtros
@@ -34,43 +44,71 @@ if(show), figure('Name','High pass filter (3x3 and 5x5)'), imshow([lena_img, hig
 % Ejercicio 3
 
 %a
-img = lena_img;
-params = containers.Map({'sigma', 'size'}, {5, 30});
-res_smoothing = smoothing(img, params);
-if(show), figure('Name', 'Image smoothing'), imshow([img, res_smoothing]), end
+if (show_all || show3)
+    img = lena_img;
+    params = containers.Map({'sigma', 'size'}, {5, 30});
+    res_smoothing = smoothing(img, params);
+    figure('Name', 'Image lena smoothing'), imshow([img, res_smoothing]);
+
+    img = test_img;
+    params = containers.Map({'sigma', 'size'}, {5, 30});
+    res_smoothing = smoothing(img, params);
+    figure('Name', 'Image test smoothing'), imshow([img, res_smoothing]);
+end
 
 %b
-img = lena_img;
-params = containers.Map({'sigma', 'size'}, {5, 30});
-res_unsharp = unsharp_masking(img, params);
-if(show), figure('Name', 'Image unsharp masking'), imshow([img, res_unsharp]), end
+if (show_all || show3)
+    img = lena_img;
+    params = containers.Map({'sigma', 'size'}, {5, 30});
+    res_unsharp = unsharp_masking(img, params);
+    figure('Name', 'Image lena unsharp masking'), imshow([img, res_unsharp]);
 
+    img = test_img;
+    params = containers.Map({'sigma', 'size'}, {5, 30});
+    res_unsharp = unsharp_masking(img, params);
+    figure('Name', 'Image test unsharp masking'), imshow([img, res_unsharp]);
+end
 
 %Ejercicio 4
 
 %a gaussian noise
+if (show_all || show4)
+    white_limit = -0.7;
+    black_limit = 0.7;
+    mu = 0;
+    sigma = 1;
 
-white_limit = -0.7;
-black_limit = 0.7;
-mu = 0;
+    lena_gauss_noise = gauss_noise(lena_img,white_limit, black_limit,mu, sigma);
+    figure('Name', "Sigma 1"), imshow([lena_img, lena_gauss_noise]);
 
-sigma = 1;
+    sigma = 2;
 
-lena_gauss_noise = gauss_noise(lena_img,white_limit, black_limit,mu, sigma);
-if(1), figure('Name', "Sigma 1"), imshow([lena_img, lena_gauss_noise]); end
+    lena_gauss_noise = gauss_noise(lena_img,white_limit, black_limit,mu, sigma);
+    figure('Name', "Sigma 2"), imshow([lena_img, lena_gauss_noise]);
 
-sigma = 2;
+    sigma = 3;
 
-lena_gauss_noise = gauss_noise(lena_img,white_limit, black_limit,mu, sigma);
-if(1),  figure('Name', "Sigma 2"), imshow([lena_img, lena_gauss_noise]); end
-
-sigma = 3;
-
-lena_gauss_noise = gauss_noise(lena_img,white_limit, black_limit,mu, sigma);
-if(1),  figure('Name', "Sigma 3"), imshow([lena_img, lena_gauss_noise]); end
+    lena_gauss_noise = gauss_noise(lena_img,white_limit, black_limit,mu, sigma);
+    figure('Name', "Sigma 3"), imshow([lena_img, lena_gauss_noise]);
+end
 
 
 % Ejercicio 5
-img = lena_img;
-res_median_fitler = median_filter(img, 3);
-if(show), figure('Name', 'Image median filter'), imshow([img, res_median_fitler]), end
+if (show_all || show5)
+    img = lena_img;
+    res_median_fitler = median_filter(img, 3);
+    figure('Name', 'Image median filter'), imshow([img, res_median_fitler]);
+end
+
+% Ejercico 6
+if (show_all || show6)
+    img = lena_img;
+    with_noise = gauss_noise(img, -0.7, 0.7, 0, 0.5);
+    res = median_filter(with_noise,3);
+	figure('Name', 'Image lena with noise median filter'), imshow([img, with_noise, res]);
+
+    img = test_img;
+    with_noise = gauss_noise(img, -0.7, 0.7, 0, 0.5);
+    res = median_filter(with_noise,3);
+    figure('Name', 'Image test with noise median filter'), imshow([img, with_noise, res])
+end
