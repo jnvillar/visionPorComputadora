@@ -1,28 +1,25 @@
 function f=gauss_noise(img, white_limit, black_limit, mu, sigma)
-    f = imadd(img,generate_noise_image(img,white_limit, black_limit, mu, sigma));
+    noise_img = generate_noise_image(img,white_limit, black_limit, mu, sigma);
+    f = imadd(img, noise_img);
 end
 
 function f=generate_noise_image(img,white_limit,black_limit,  mu, sigma)
-    [X,Y] = size(img);
-    r = normrnd(mu,sigma);
-    r = mu+(sigma-mu)*r;
-
+    [X,Y] = size(img);    
     for i=1:X
         for j=1:Y
+            r = normrnd(mu,sigma);
+            r = mu+(sigma-mu)*r;
             if r <= white_limit
-                f(i,j) = -255;
+                f(i,j) = uint8(-255);
             end
             if r > white_limit && r<= black_limit
-                f(i,j) = 0;
+                f(i,j) = uint8(0);
             end
             if r>black_limit
-                f(i,j) = 255;
+                f(i,j) = uint8(255);
             end
         end
     end
-    disp(size(img))
-    disp(size(f))
-    uint8(f)
 end
 
 
