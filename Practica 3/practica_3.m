@@ -96,20 +96,19 @@ end
 %b rayleigh noise
 
 if (show_all || show4b)
-    white_limit = 0.3;
-    black_limit = 0.6;
+
     mu = 0;
     sigma = 1;
 
-    lena_rayleigh_noise = rayleigh_noise(lena_img,white_limit, black_limit,mu, sigma);
+    lena_rayleigh_noise = rayleigh_noise(lena_img,mu, sigma);
     figure('Name', "Sigma 1"), imshow([lena_img, lena_rayleigh_noise]);
     
     sigma = 2;
-    lena_rayleigh_noise = rayleigh_noise(lena_img,white_limit, black_limit,mu, sigma);
+    lena_rayleigh_noise = rayleigh_noise(lena_img,mu, sigma);
     figure('Name', "Sigma 2"), imshow([lena_img, lena_rayleigh_noise]);
     
     sigma = 3;
-    lena_rayleigh_noise = rayleigh_noise(lena_img,white_limit, black_limit,mu, sigma);
+    lena_rayleigh_noise = rayleigh_noise(lena_img,mu, sigma);
     figure('Name', "Sigma 3"), imshow([lena_img, lena_rayleigh_noise]);
 end
 % Ejercicio 5
