@@ -5,7 +5,7 @@ lena_img = imread('imgs/lena.png');
 show_all = 0;
 show1 = 0;
 show3 = 0;
-show4a = 0;
+show4a = 1;
 show4b = 1;
 show5 = 0;
 show6 = 0;
@@ -73,44 +73,91 @@ end
 %Ejercicio 4
 
 %a gaussian noise
-if (show_all || show4a)
-    white_limit = -0.7;
-    black_limit = 0.7;
-    mu = 0;
-    sigma = 1;
+if (show_all || show4a)    
+    img = lena_img;
+    params = containers.Map({'sigma', 'size'}, {5, 30});
+    lena_smoothing = smoothing(img, params);
+    
+    
+    lena_gauss_noise_1 = gauss_noise(lena_smoothing,mu, 1);
+    lena_gauss_noise_2 = gauss_noise(lena_smoothing,mu, 2);
+    lena_gauss_noise_3 = gauss_noise(lena_smoothing,mu, 3);
+    figure('Name', "Gauss Noise lena with smoothing Sigma variation"), imshow([lena_smoothing, lena_gauss_noise_1,lena_gauss_noise_2,lena_gauss_noise_3]);
 
-    img = im2double(lena_img);
-    lena_gauss_noise = gauss_noise(img,white_limit, black_limit,mu, sigma);
-    figure('Name', "Sigma 1"), imshow([img, lena_gauss_noise]);
+    img = test_img;
+    params = containers.Map({'sigma', 'size'}, {5, 30});
+    test_smoothing = smoothing(img, params);
+   
+    test_gauss_noise_1 = gauss_noise(test_smoothing,mu, 1);
+    test_gauss_noise_2 = gauss_noise(test_smoothing,mu, 2);
+    test_gauss_noise_3 = gauss_noise(test_smoothing,mu, 3);
+    figure('Name', "Gauss Noise test with smoothing Sigma variation"), imshow([test_smoothing, test_gauss_noise_1,test_gauss_noise_2,test_gauss_noise_3]);
 
-    sigma = 2;
+    img = lena_img;
+    params = containers.Map({'sigma', 'size'}, {5, 30});
+    lena_unsharp = unsharp_masking(img, params);
+   
+    lena_gauss_noise_1 = gauss_noise(lena_unsharp,mu, 1);
+    lena_gauss_noise_2 = gauss_noise(lena_unsharp,mu, 2);
+    lena_gauss_noise_3 = gauss_noise(lena_unsharp,mu, 3);
+    figure('Name', "Gauss Noise lena with unsharp Sigma variation"), imshow([lena_unsharp, lena_gauss_noise_1,lena_gauss_noise_2,lena_gauss_noise_3]);
 
-    lena_gauss_noise = gauss_noise(img,white_limit, black_limit,mu, sigma);
-    figure('Name', "Sigma 2"), imshow([img, lena_gauss_noise]);
-
-    sigma = 3;
-
-    lena_gauss_noise = gauss_noise(img,white_limit, black_limit,mu, sigma);
-    figure('Name', "Sigma 3"), imshow([img, lena_gauss_noise]);
+    
+    img = test_img;
+    params = containers.Map({'sigma', 'size'}, {5, 30});
+    test_unsharp = unsharp_masking(img, params);
+   
+    
+    test_gauss_noise_1 = gauss_noise(test_unsharp,mu, 1);
+    test_gauss_noise_2 = gauss_noise(test_unsharp,mu, 2);
+    test_gauss_noise_3 = gauss_noise(test_unsharp,mu, 3);
+    figure('Name', "Gauss Noise test with unsharp Sigma variation"), imshow([test_unsharp, test_gauss_noise_1,test_gauss_noise_2,test_gauss_noise_3]);
 end
 
 %b rayleigh noise
 
 if (show_all || show4b)
-
     mu = 0;
-    sigma = 1;
+    
+    img = lena_img;
+    params = containers.Map({'sigma', 'size'}, {5, 30});
+    lena_smoothing = smoothing(img, params);
+    
+    
+    lena_gauss_noise_1 = rayleigh_noise(lena_smoothing,mu, 1);
+    lena_gauss_noise_2 = rayleigh_noise(lena_smoothing,mu, 2);
+    lena_gauss_noise_3 = rayleigh_noise(lena_smoothing,mu, 3);
+    figure('Name', "rayleigh Noise lena with smoothing Sigma variation"), imshow([lena_smoothing, lena_gauss_noise_1,lena_gauss_noise_2,lena_gauss_noise_3]);
 
-    lena_rayleigh_noise = rayleigh_noise(lena_img,mu, sigma);
-    figure('Name', "Sigma 1"), imshow([lena_img, lena_rayleigh_noise]);
+    img = test_img;
+    params = containers.Map({'sigma', 'size'}, {5, 30});
+    test_smoothing = smoothing(img, params);
+   
+    test_gauss_noise_1 = rayleigh_noise(test_smoothing,mu, 1);
+    test_gauss_noise_2 = rayleigh_noise(test_smoothing,mu, 2);
+    test_gauss_noise_3 = rayleigh_noise(test_smoothing,mu, 3);
+    figure('Name', "rayleigh Noise test with smoothing Sigma variation"), imshow([test_smoothing, test_gauss_noise_1,test_gauss_noise_2,test_gauss_noise_3]);
+
+    img = lena_img;
+    params = containers.Map({'sigma', 'size'}, {5, 30});
+    lena_unsharp = unsharp_masking(img, params);
+   
+    lena_gauss_noise_1 = rayleigh_noise(lena_unsharp,mu, 1);
+    lena_gauss_noise_2 = rayleigh_noise(lena_unsharp,mu, 2);
+    lena_gauss_noise_3 = rayleigh_noise(lena_unsharp,mu, 3);
+    figure('Name', "rayleigh Noise lena with unsharp Sigma variation"), imshow([lena_unsharp, lena_gauss_noise_1,lena_gauss_noise_2,lena_gauss_noise_3]);
+
     
-    sigma = 2;
-    lena_rayleigh_noise = rayleigh_noise(lena_img,mu, sigma);
-    figure('Name', "Sigma 2"), imshow([lena_img, lena_rayleigh_noise]);
+    img = test_img;
+    params = containers.Map({'sigma', 'size'}, {5, 30});
+    test_unsharp = unsharp_masking(img, params);
+   
     
-    sigma = 3;
-    lena_rayleigh_noise = rayleigh_noise(lena_img,mu, sigma);
-    figure('Name', "Sigma 3"), imshow([lena_img, lena_rayleigh_noise]);
+    test_gauss_noise_1 = rayleigh_noise(test_unsharp,mu, 1);
+    test_gauss_noise_2 = rayleigh_noise(test_unsharp,mu, 2);
+    test_gauss_noise_3 = rayleigh_noise(test_unsharp,mu, 3);
+    figure('Name', "rayleigh Noise test with unsharp Sigma variation"), imshow([test_unsharp, test_gauss_noise_1,test_gauss_noise_2,test_gauss_noise_3]);
+
 end
 % Ejercicio 5
 if (show_all || show5)

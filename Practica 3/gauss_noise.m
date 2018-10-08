@@ -1,10 +1,12 @@
-function f=gauss_noise(img, white_limit, black_limit, mu, sigma)
-    noise_img = generate_noise_image(img,white_limit, black_limit, mu, sigma);
-    f = imadd(im2double(img), noise_img);
+function f=gauss_noise(img, mu, sigma)
+    img_d = im2double(img);
+    noise_img = generate_noise_image(img_d, mu, sigma);
+    f = imadd(im2double(img_d), noise_img);
+    f = f.*255;
     %f = add_noise(img, white_limit, black_limit, mu, sigma);
 end
 
-function f=generate_noise_image(img,white_limit,black_limit,  mu, sigma)
+function f=generate_noise_image(img,  mu, sigma)
     [X,Y] = size(img);    
     f=mu+(sigma-mu).*randn(X,Y);
 end
