@@ -6,7 +6,7 @@ show_all = 0;
 show1 = 0;
 show3 = 0;
 show4a = 0;
-show4b = 1;
+show4b = 0;
 show5 = 0;
 show6 = 0;
 show7 = 0;
@@ -77,20 +77,11 @@ if (show_all || show4a)
     white_limit = -0.7;
     black_limit = 0.7;
     mu = 0;
-    sigma = 1;
-
-    lena_gauss_noise = gauss_noise(lena_img,white_limit, black_limit,mu, sigma);
-    figure('Name', "Sigma 1"), imshow([lena_img, lena_gauss_noise]);
-
-    sigma = 2;
-
-    lena_gauss_noise = gauss_noise(lena_img,white_limit, black_limit,mu, sigma);
-    figure('Name', "Sigma 2"), imshow([lena_img, lena_gauss_noise]);
-
-    sigma = 3;
-
-    lena_gauss_noise = gauss_noise(lena_img,white_limit, black_limit,mu, sigma);
-    figure('Name', "Sigma 3"), imshow([lena_img, lena_gauss_noise]);
+  
+    lena_gauss_noise_1 = gauss_noise(lena_img,white_limit, black_limit,mu, 1);
+    lena_gauss_noise_2 = gauss_noise(lena_img,white_limit, black_limit,mu, 2);
+    lena_gauss_noise_3 = gauss_noise(lena_img,white_limit, black_limit,mu, 3);
+    figure('Name', "Gauss Noise Sigma variation"), imshow([lena_img, lena_gauss_noise_1,lena_gauss_noise_2,lena_gauss_noise_3]);
 end
 
 %b rayleigh noise
@@ -98,18 +89,10 @@ end
 if (show_all || show4b)
 
     mu = 0;
-    sigma = 1;
-
-    lena_rayleigh_noise = rayleigh_noise(lena_img,mu, sigma);
-    figure('Name', "Sigma 1"), imshow([lena_img, lena_rayleigh_noise]);
-    
-    sigma = 2;
-    lena_rayleigh_noise = rayleigh_noise(lena_img,mu, sigma);
-    figure('Name', "Sigma 2"), imshow([lena_img, lena_rayleigh_noise]);
-    
-    sigma = 3;
-    lena_rayleigh_noise = rayleigh_noise(lena_img,mu, sigma);
-    figure('Name', "Sigma 3"), imshow([lena_img, lena_rayleigh_noise]);
+    lena_rayleigh_noise_1 = rayleigh_noise(lena_img,mu, 1);
+    lena_rayleigh_noise_2 = rayleigh_noise(lena_img,mu, 2);   
+    lena_rayleigh_noise_3 = rayleigh_noise(lena_img,mu, 3);
+    figure('Name', "Rayleight Noise Sigma variation"), imshow([lena_img, lena_rayleigh_noise_1,lena_rayleigh_noise_2,lena_rayleigh_noise_3]);
 end
 % Ejercicio 5
 if (show_all || show5)
