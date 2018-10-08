@@ -11,10 +11,10 @@ function f=generate_noise_image(img,white_limit,black_limit,  mu, sigma)
             r = rand();           
             r = mu + sqrt((-1)*sigma*log(1-r));
             if r <= white_limit
-                f(i,j) = uint8(-255);
+                f(i,j) = uint8(0);
             end
             if r > white_limit && r<= black_limit
-                f(i,j) = uint8(1);
+                f(i,j) = img(i,j);
             end
             if r>black_limit
                 f(i,j) = uint8(255);
