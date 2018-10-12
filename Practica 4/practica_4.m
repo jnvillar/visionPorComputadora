@@ -27,10 +27,12 @@ end
 
 if show_2
     
-treshold = 5.4884e+04;
+treshold = 50;
 m = 2; % m must be close to 2 
 
-lena_borders  = lapplacian_borders(lena,9,m);
+lena_noise_1 = gauss_noise(lena,0, 0.1);
+
+lena_borders  = lapplacian_borders(lena,treshold,m);
 lena_noise_1_borders = lapplacian_borders(lena_noise_1,treshold,m);
 imshow([lena, lena_borders, lena_noise_1, lena_noise_1_borders])
     
