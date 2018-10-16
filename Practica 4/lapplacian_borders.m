@@ -14,6 +14,7 @@ function f=lapplacian_borders(img, t, m)
             end
         end
     end
+    f = uint8(f);
 end
 
    
