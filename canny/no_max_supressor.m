@@ -1,34 +1,15 @@
 function res=no_max_supressor(magnitude_img, direction_img)
-    best_direction_img = best_approximation_matrix(direction_img);
     [X,Y] = size(magnitude_img);
     res = zeros(X,Y);
     for i=1:X
         for j=1:Y
-            res(i,j) = name_to_change(best_direction_img, magnitude_img, i, j);
+            res(i,j) = get_or_supress(direction_img, magnitude_img, i, j);
         end
     end
 end
 
 
-function res=best_approximation_matrix(dir_img)
-    [X,Y] = size(dir_img);
-    res = zeros(X,Y);
-    for i=1:X
-        for j=1:Y
-            res(i,j) = best_approximation(dir_img(i,j));
-        end
-    end
-end
-
-
-function res=best_approximation(radian)
-    posible_dirs = [0, 0.7854, 1.5708, 2.3562];
-    dir = min(posible_dirs-radian);
-    res = dir+radian;
-end
-
-
-function res=name_to_change(best_dir_img, magnitude_img, i, j)
+function res=get_or_supress(best_dir_img, magnitude_img, i, j)
     best_dir = best_dir_img(i,j);
     
     if best_dir == 0
@@ -36,17 +17,17 @@ function res=name_to_change(best_dir_img, magnitude_img, i, j)
         j1 = j;
         i2 = i-1;
         j2 = j;
-    elseif best_dir == 0.7854
+    elseif best_dir == 45
         i1 = i+1;
         j1 = j+1;
         i2 = i-1;
         j2 = j-1;
-    elseif best_dir == 1.5708
+    elseif best_dir == 90
         i1 = i;
         j1 = j+j;
         i2 = i;
         j2 = j-1;
-    elseif best_dir == 2.3562
+    elseif best_dir == 135
         i1 = i-1;
         j1 = j+1;
         i2 = i+1;
