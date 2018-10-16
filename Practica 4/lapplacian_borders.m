@@ -14,6 +14,7 @@ function f=lapplacian_borders(img, t, m)
             end
         end
     end
+    f = uint8(f);
 end
 
    
@@ -34,14 +35,10 @@ function f=local_variance(m, img, i, j)
     min_j = max(1,j-round_m);
     max_j = min(Y,j+round_m);
     
-    sum = 0;
-    average = int64(aux(m,i,j,img));
-    for eje_x=min_i:max_i
-        for eje_y=min_j:max_j
-           sum = sum + ((int64(img(eje_x,eje_y))-average)^2);
-        end
-    end
-    f=constant*sum;
+    avg = int64(aux(m,i,j,img));
+    avg_matrix = int64(ones(max_i - min_i + 1, max_j - min_j + 1)) .* avg;
+    total_sum = sum(sum((int64(img(min_i:max_i, min_j:max_j))-avg_matrix).^2));
+    f=constant*total_sum;
 end
 
 function f=aux(m,i,j,img)
@@ -54,12 +51,5 @@ function f=aux(m,i,j,img)
     min_j = max(1,j-round_m);
     max_j = min(Y,j+round_m);
 
-    sum = 0;
-    for eje_x=min_i:max_i
-        for eje_y=min_j:max_j
-           sum = sum + int64(img(eje_x,eje_y));
-        end
-    end
-   
-    f=constant*sum;
+    f = constant * sum(sum(int64(img(min_i:max_i, min_j:max_j))));
 end
