@@ -1,4 +1,6 @@
-magician_img = imread('imgs/magician.jpg');
+filepath = fileparts(mfilename('fullpath'));
+addpath(strcat(filepath, '/../../imgs'));
+addpath(strcat(filepath, '/../../Practica 3'));
 lena_img = imread('imgs/lena.png');
 img = lena_img;
 
@@ -14,11 +16,13 @@ function res=canny_border(img)
     magnitude = get_magnitude(smooth_img);
     direction = get_direction(smooth_img);
     no_max_supr_img = no_max_supressor(magnitude, direction);
-    
+      
     gradient_x = gradient_matrix_x(img);
     gradient_y = gradient_matrix_y(img);
     
     hysteresis_img = hysteresis_threshold(magnitude, direction, 0, 12);
+    disp(hysteresis_img);
+    
     
     figure('name', 'Original');imshow([uint8(smooth_img)]);
     figure('name', 'Gradients');imshow([gradient_x, gradient_y]);
