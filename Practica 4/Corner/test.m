@@ -5,20 +5,21 @@ clear all;
 clc
 %% part 0 - Construct necessary form of images
 im=imread('lena.png'); % Step 0: Read Image
-figure ;imshow(im);
+
 im1=im2double(im);
-figure ;imshow(im1);
+
 dx = [-1 0 1; -1 0 1; -1 0 1]; % image derivatives
 dy = dx';
 Ix = imfilter(im1, dx);    % Step 1: Compute the image derivatives Ix and Iy
 Iy = imfilter(im1, dy);
 g = fspecial('gaussian',9,2); % Step 2: Generate Gaussian filter 'g' of size 9x9 and standard deviation Sigma=2.
 Ix2 = imfilter(Ix.^2, g); % Step 3: Smooth the squared image derivatives to obtain Ix2, Iy2 and IxIy
-figure;imshow(Ix2);
+
 Iy2 = imfilter(Iy.^2, g);
-figure;imshow(Iy2);
+
 IxIy = imfilter(Ix.*Iy, g);
-figure;imshow(IxIy); %Display the images obtained in different steps
+
+
 %% part 1- Compute Matrix E which contains for every point the value
 [r c]=size(Ix2);
 E = zeros(r, c); % Compute matrix E
@@ -35,7 +36,8 @@ end
 t=toc;
 disp('time needed for calculating E matrix');
 disp(t);
-figure, imshow(mat2gray(E)); % display result
+%figure, imshow(mat2gray(E)); % display result
+
 %% part 2- Compute Matrix R which contains for every point the cornerness score.
 [r c]=size(Ix2);
 R = zeros(r, c);
@@ -50,8 +52,12 @@ for i=2:1:r-1
      R(i,j)=det(M)-k*trace(M).^2; %(1) Build autocorrelation matrix for every singe pixel considering a window of size 3x3
     end
 end
+
 t=toc;
+figure, imshow((R)); % display result
 figure, imshow(mat2gray(R)); % display result
+
+return
 disp('time for calculating R matrix');
 disp(t);
 %% Part 3 - Select for E and R the 81 most salient points
