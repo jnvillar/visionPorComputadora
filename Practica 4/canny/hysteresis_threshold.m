@@ -7,11 +7,10 @@ function res=hysteresis_threshold(magnitude, directions, u_min, u_max)
                 if visited(i,j) == 0 && magnitude(i,j) > u_max
                     k = i;
                     l = j;
-                    while magnitude(k,l) > u_min
+                    while magnitude(k,l) > u_min && visited(k,l) == 0
                         borders(k,l) = 255;
                         visited(k,l) = 1;
                         m = next(visited,directions, k,l);
-                        disp(m)
                         k = m(1);
                         l = m(2);
                     end
@@ -47,24 +46,24 @@ function f = pixel_in_direction(directions, k, l, degrees)
     res_x = cosd(direction+degrees);
     res_y = sind(direction+degrees);
 
-    if res_x > 0
+    if res_x < 0
         res_x = max(k-1,1);
-    elseif res_x < 0
+    elseif res_x > 0
         res_x = min(k+1, i); 
     elseif res_x == 0
         res_x = k;
     end
     
-    if res_y > 0
+    if res_y > 0     % if sind is positive y should decrease
         res_y = max(l-1,1);
-    elseif res_y < 0
+    elseif res_y < 0 % if sind is negative y should increase
         res_y = min(l+1, j);
     elseif res_y == 0
         res_y = l;
     end
     
-%     disp("resultado")
-%     disp([res_x,res_y])
+%      disp("resultado")
+%      disp([res_x,res_y])
     
     f = [res_x,res_y];
 end

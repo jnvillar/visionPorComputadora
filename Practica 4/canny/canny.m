@@ -20,9 +20,7 @@ function res=canny_border(img)
     gradient_x = gradient_matrix_x(img);
     gradient_y = gradient_matrix_y(img);
     
-    hysteresis_img = hysteresis_threshold(magnitude, direction, 0, 12);
-    disp(hysteresis_img);
-    
+    hysteresis_img = hysteresis_threshold(magnitude, direction, 10, 12);
     
     figure('name', 'Original');imshow([uint8(smooth_img)]);
     figure('name', 'Gradients');imshow([gradient_x, gradient_y]);
