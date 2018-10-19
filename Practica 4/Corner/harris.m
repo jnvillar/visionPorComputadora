@@ -33,11 +33,10 @@ function res = harris(img, threshold, func_r)
 
     for i=2:X-1
         for j=2:Y-1
-            w = 1;%exp(-(i^2+j^2)/2*sigma^2);
-            
-            ix2 = sum(sum(gx2(i-1:i+1,j-1:j+1)));
-            iy2 = sum(sum(gy2(i-1:i+1,j-1:j+1)));
-            ixy = sum(sum(gxy(i-1:i+1,j-1:j+1)));
+            w = 1;
+            ix2 = sum(sum(gx2(i-1:i+1,j-1:j+1).*w));
+            iy2 = sum(sum(gy2(i-1:i+1,j-1:j+1).*w));
+            ixy = sum(sum(gxy(i-1:i+1,j-1:j+1).*w));
             M = [ix2 ixy;ixy iy2].*w;
             
             

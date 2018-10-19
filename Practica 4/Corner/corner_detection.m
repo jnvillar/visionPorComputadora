@@ -3,13 +3,14 @@ test_img = imread('imgs/test.png');
 img = test_img;
 
 figure('name', 'Original');imshow(img);
-show_corner_detection(img, @harris_r)
-show_corner_detection(img, @triggs_r)
-show_corner_detection(img, @szeliski_r)
-show_corner_detection(img, @shi_tomasi_r)
+show_corner_detection(img, @harris_r, 2)
+show_corner_detection(img, @triggs_r, 2)
+show_corner_detection(img, @szeliski_r, 1)
+show_corner_detection(img, @shi_tomasi_r, 0.5)
 
-function show_corner_detection(img, f)
-    res = harris(img, 2, f);
+
+function show_corner_detection(img, f, threshold)
+    res = harris(img, threshold, f);
 
     [X,Y] = size(res);
     with_markers = cat(3, img, img, img);
