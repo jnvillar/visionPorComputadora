@@ -1,11 +1,11 @@
-function res = harris(img, threshold)
+function res = harris(img, threshold, func_r)
     img = im2double(img);
     
     dx = [-1 0 1; -1 0 1; -1 0 1]; % image derivatives
     dy = dx';
     
-    gradient_x = conv2(img, dx);
-    gradient_y = conv2(img, dy);
+    gradient_x = conv2(img, dx, 'same');
+    gradient_y = conv2(img, dy, 'same');
     
     %figure('name', 'gradients'); imshow([gradient_x, gradient_y]);
     
@@ -16,9 +16,9 @@ function res = harris(img, threshold)
     %figure('name', 'gradients^2'); imshow([gx2, gy2, gxy]);
     
     gaussian = gaussian_mask(9, 2);
-    gx2 = conv2(gx2, gaussian);
-    gy2 = conv2(gy2, gaussian);
-    gxy = conv2(gxy, gaussian);
+    gx2 = conv2(gx2, gaussian, 'same');
+    gy2 = conv2(gy2, gaussian, 'same');
+    gxy = conv2(gxy, gaussian, 'same');
     
     %figure('name', 'after gauss'); imshow([gx2, gy2, gxy])
 
@@ -28,43 +28,58 @@ function res = harris(img, threshold)
     E1 = zeros(X,Y);
     E2 = zeros(X,Y);
     
-    k = 0.04;
+
     sigma = 3;
-%     for i=1:X
-%         for j=1:Y
-%             w = exp(-(i^2+j^2)/2*sigma^2);
-%             M = [gx2(i,j) gxy(i,j);gxy(i,j) gy2(i,j)].*w;
-%             det_M = det(M);
-%             trace_M = trace(M);
-%             R(i,j) = det_M - k * trace_M^2;
-%         end
-%     end
+
     for i=2:X-1
         for j=2:Y-1
             w = 1;%exp(-(i^2+j^2)/2*sigma^2);
+            
             ix2 = sum(sum(gx2(i-1:i+1,j-1:j+1)));
             iy2 = sum(sum(gy2(i-1:i+1,j-1:j+1)));
             ixy = sum(sum(gxy(i-1:i+1,j-1:j+1)));
             M = [ix2 ixy;ixy iy2].*w;
-            det_M = det(M);
-            trace_M = trace(M);
-            R(i,j) = det_M - k * trace_M^2;
+            
+            
+            eigs = eig(M);
+            
+            R(i,j) = func_r(eigs);
+            %R(i,j) = eigs(1)*eigs(2) - k * (eigs(1)+eigs(2)).^2;
+
+            
         end
     end
 
-    
-    figure('name', 'R'); imshow(R);
-    
-    res = zeros(X,Y);
+    %figure('name', 'R'); imshow(R);
+
     for i=1:X
         for j=1:Y
-            if R(i,j) > 2
-                res(i,j) = 255;
-            else
-                res(i,j) = 0;
+            if R(i,j) < threshold
+                R(i,j) = 0;
             end
         end
     end
+    %figure('name', 'Above Threshold'); imshow(R);
+    
+    local_max = zeros(X,Y);
+    remove_center = ones(3,3);
+    remove_center(2,2) = 0;
+    for i=2:X-1
+        for j=2:Y-1
+            max_value = max(max(R(i-1:i+1,j-1:j+1).*remove_center));
+            if R(i,j) > max_value
+                local_max(i,j) = 1;
+            else
+                local_max(i,j) = 0;
+            end
+        end
+    end
+
+     
+    %figure('name', 'No max supression'); imshow(local_max);
+        
+    res = local_max;
+    
     
 end
 
