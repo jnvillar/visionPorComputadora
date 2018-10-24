@@ -1,4 +1,4 @@
-function res = harris(img, threshold, func_r)
+function res = corner_detection(img, threshold, func_r)
     img = im2double(img);
     
     dx = [-1 0 1; -1 0 1; -1 0 1]; % image derivatives

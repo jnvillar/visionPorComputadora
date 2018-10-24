@@ -1,4 +1,4 @@
-function f=lapplacian_borders(img, t, m)
+function f=laplacian_borders(img, t, m)
     square_gradient_matrix = calculate_square_gradient_matrix(img);
     [X,Y] = size(img);
     f = zeros(X,Y);

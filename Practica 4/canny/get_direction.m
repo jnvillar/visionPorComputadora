@@ -1,6 +1,6 @@
-function res=get_direction(img)
-    gradient_x = gradient_matrix_x(img);
-    gradient_y = gradient_matrix_y(img);
+function res=get_direction(img, kernel_gradient_x, kernel_gradient_y)
+    gradient_x = double(image_convolution(img, kernel_gradient_x));
+    gradient_y = double(image_convolution(img, kernel_gradient_y));
     gradient_y(gradient_y == 0) = realmin;
     
     direction = atan(gradient_x./gradient_y).*(180/pi);
@@ -21,7 +21,7 @@ end
 
 function res=best_approximation(radian)
     posible_dirs = [0, 45, 90, 135];
-    dir = min(abs(posible_dirs-radian));
+    dir = min(abs(posible_dirs-radian));    
     if ismember(radian+dir, posible_dirs)
         res = dir+radian;
     else
