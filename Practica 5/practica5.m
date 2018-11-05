@@ -1,14 +1,17 @@
 filepath = fileparts(mfilename('fullpath'));
-addpath(strcat(filepath, '/../imgs'));
+addpath(strcat(filepath, '/../imgs/dameros'));
+addpath(strcat(filepath, '/../Practica 3'));
 
-img_a = imread('imgs/lena.png');
-img_b = imread('imgs/lena.png');
+img_a = imread('dameros/rect_a.jpg');
+img_b = imread('dameros/rect_b.jpg');
 
-edges_img_a = [ 607 533 ; 752 256 ; 636 465 ; 985 341 ];
-edges_img_b = [ 711 525 ; 298 215 ; 284 361 ; 687 338 ];
+edges_img_a = [ 850 140 ; 1500 2000 ; 1500 2000 ; 1500 2000 ];
+edges_img_b = [ 607 533 ; 752 256 ; 636 465 ; 985 341 ];
+
 [edges, ignore] = size(edges_img_a);
 
 show_selected_edges(edges, img_a, img_b, edges_img_a, edges_img_b)
+return;
 corresponde_matrixes = zeros(2*edges, 9);
 
 for i=1:edges
@@ -26,9 +29,7 @@ h = V(:,9);
 h = vec2mat(h, 3);
 
 res = image_convolution(img_a, h);
-
-disp(res)
-imshow(res)
+figure; imshow(res)
 
 function res=generate_correspondence_matrix(img_a_edge, img_b_edge)
     a = img_a_edge;
@@ -38,11 +39,11 @@ end
 
 function show_selected_edges(edges, img_a, img_b, edges_img_a, edges_img_b)
     for i=1:edges
-        with_markers_a = insertMarker(img_a,edges_img_a(i,:),'plus');
-        with_markers_b = insertMarker(img_b,edges_img_b(i,:),'plus');
+        img_a = insertMarker(img_a,edges_img_a(i,:),'plus', 'size', 40);
+        imb_b = insertMarker(img_b,edges_img_b(i,:),'plus', 'size', 40);
     end
-    imshow(with_markers_a);
-     imshow(with_markers_b);
+    figure; imshow(img_a);
+   % figure; imshow(imb_b);
 end
 
 
