@@ -8,7 +8,6 @@ img_b = rgb2gray(imread('imgs/damero2.jpg'));
 
 edges_img_a = [ 870 780; 1167 792; 869 1085; 1162 1090];
 edges_img_b = [ 285 1832 ; 409 1617; 482 1960; 612 1739];
-[height, width] = size(img_a);
 [edges, ignore] = size(edges_img_a);
 
 %show_selected_edges(edges, img_a, img_b, edges_img_a, edges_img_b)
@@ -24,22 +23,27 @@ for i=1:edges
     corresponde_matrixes(2*(i-1)+2,:) = correspondence_matrix(2,:);
 end
 
-rotation = [ cosd(90) -sind(90) 500 ;  sind(90) cosd(90) 100 ; 0 0 1];
 
 disp(corresponde_matrixes)
 
 [U,S,V] = svd(corresponde_matrixes);
 h = V(:,9);
 h = vec2mat(h, 3);
-new_img = uint8(zeros(10000,10000));
+new_img = res_image(img_a, h);
 
-disp(h)
+[width_original_img, height_original_img] = size(img_a);
+[width, height] = size(new_img);
 
-for i=1:height
-    for j=1:width
-        old_pos = [i j];
-        new_pos = transform(i,j,h);
-        new_img(new_pos(1), new_pos(2)) = img_a(old_pos(1),old_pos(2));
+invh = inv(h);
+
+for i=1:width
+    for j=1:height
+        pos_in_original_img = transform(i,j,invh);
+        if pos_in_original_img(1) <= 0 || pos_in_original_img(1) > width_original_img || pos_in_original_img(2) <= 0 || pos_in_original_img(2) > height_original_img
+        
+        else
+             new_img(i,j) = img_a(pos_in_original_img(1),pos_in_original_img(2));
+        end
     end
 end
 
@@ -53,6 +57,23 @@ function res=generate_correspondence_matrix(img_a_edge, img_b_edge)
     res = [0 0 0 (-1)*b(3)*a b(2)*a;(-1)*b(3)*a 0 0 0 (-1)*b(1)*a];
 end
 
+function f=res_image(img, h)
+    [X, Y] = size(img);
+    b1 = transform(1,1,h);
+    b2 = transform(X,1,h);
+   b3 = transform(1,Y,h);
+    b4 = transform(X,Y,h);
+    left = min([b1(1) b2(1) b3(1) b4(1)]);
+    right = max([b1(1) b2(1) b3(1) b4(1)]);
+    new_x = abs(left-right);
+    
+    up = min([b1(2) b2(2) b3(2) b4(2)]);
+    down = max([b1(2) b2(2) b3(2) b4(2)]);
+    new_y = abs(up-down);
+    
+    f = uint8(zeros(new_x,new_y));
+end
+
 function show_selected_edges(img_a, img_b, edges_img_a, edges_img_b)
     img_a = insertMarker(img_a,edges_img_a,'plus', 'color', 'green', 'size', 100);
     imb_b = insertMarker(img_b,edges_img_b,'plus', 'color', 'green', 'size', 100);
@@ -64,7 +85,7 @@ end
 function f = transform(x,y,m)
     v = [x y 1]';
     v = m*v;
-    v = [round(v(1)*3000)+4000 round(v(2)*3000)+4000];
+    v = [round(v(1)/v(3))+8000 round(v(2)/v(3))+8000];
     f = v;
 end
 
