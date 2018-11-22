@@ -6,9 +6,45 @@ lena = imread('imgs/lena.png');
 img_a = rgb2gray(imread('imgs/damero1.jpg'));
 img_b = rgb2gray(imread('imgs/damero2.jpg'));
 
-edges_img_a = [ 870 780; 1167 792; 869 1085; 1162 1090];
-edges_img_b = [ 285 1832 ; 409 1617; 482 1960; 612 1739];
+scale = 0.125;
+img_a = imresize(img_a,scale);
+img_b = imresize(img_b,scale);
+size(img_a)
+
+edges_img_a = scale*[ 870 780; 1167 792; 869 1085; 1162 1090];
+edges_img_b = scale*[ 285 1832 ; 409 1617; 482 1960; 612 1739];
 [edges, ignore] = size(edges_img_a);
+
+
+
+
+
+% img_b = new_img; 
+% edges_img_b = h2*[edges_img_a'; ones(1,length(edges_img_a))];
+% edges_img_b = edges_img_b'
+% 
+% offset = offsets(img_a, h2)
+% edges_img_b = edges_img_b - [repmat([offset 0],4,1)]
+
+
+
+
+% close all;
+% figure
+% imagesc(img_a)
+% colormap(gray)
+% hold on;
+% plot(edges_img_a(:,1),edges_img_a(:,2),'gx-')
+% title('image a ')
+% 
+% figure
+% imagesc(img_b)
+% colormap(gray)
+% hold on;
+% plot(edges_img_b(:,1),edges_img_b(:,2),'gx-')
+% title('image b ')
+
+
 
 %show_selected_edges(edges, img_a, img_b, edges_img_a, edges_img_b)
 corresponde_matrixes = zeros(2*edges, 9);
@@ -29,11 +65,20 @@ disp(corresponde_matrixes)
 [U,S,V] = svd(corresponde_matrixes);
 h = V(:,9);
 h = vec2mat(h, 3);
+
+ang = pi/4;
+h = [cos(ang) -sin(ang) 0;
+    sin(ang) cos(ang) 0;
+    0 0 1];
+
+
+
 new_img = res_image(img_a, h);
 offset = offsets(img_a, h);
 [width_original_img, height_original_img] = size(img_a);
 [width, height] = size(new_img);
 invh = inv(h);
+
 
 for i=1:width
     for j=1:height
@@ -46,7 +91,9 @@ for i=1:width
     end
 end
 
+
 figure; imshow(new_img);
+
 
 function f = offsets(img, h)
     [X, Y] = size(img);
@@ -92,7 +139,6 @@ end
 
 function f = transform(x,y,m)
     v = [x y 1]';
-    m = m';
     v = m*v;
     v = [round(v(1)/v(3)) round(v(2)/v(3))];
     f = v;
