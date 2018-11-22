@@ -30,15 +30,14 @@ disp(corresponde_matrixes)
 h = V(:,9);
 h = vec2mat(h, 3);
 new_img = res_image(img_a, h);
-
+offset = offsets(img_a, h);
 [width_original_img, height_original_img] = size(img_a);
 [width, height] = size(new_img);
-
 invh = inv(h);
 
 for i=1:width
     for j=1:height
-        pos_in_original_img = transform(i,j,invh);
+        pos_in_original_img = transform(i + offset(1),j + offset(2),invh);
         if pos_in_original_img(1) <= 0 || pos_in_original_img(1) > width_original_img || pos_in_original_img(2) <= 0 || pos_in_original_img(2) > height_original_img
         
         else
@@ -48,8 +47,17 @@ for i=1:width
 end
 
 figure; imshow(new_img);
-figure; imshow(img_a);
-figure; imshow(img_b);
+
+function f = offsets(img, h)
+    [X, Y] = size(img);
+    b1 = transform(1,1,h);
+    b2 = transform(X,1,h);
+    b3 = transform(1,Y,h);
+    b4 = transform(X,Y,h);
+    left = min([b1(1) b2(1) b3(1) b4(1)]);
+    up = min([b1(2) b2(2) b3(2) b4(2)]);
+    f = [left, up];
+end
 
 function res=generate_correspondence_matrix(img_a_edge, img_b_edge)
     a = img_a_edge;
@@ -61,7 +69,7 @@ function f=res_image(img, h)
     [X, Y] = size(img);
     b1 = transform(1,1,h);
     b2 = transform(X,1,h);
-   b3 = transform(1,Y,h);
+    b3 = transform(1,Y,h);
     b4 = transform(X,Y,h);
     left = min([b1(1) b2(1) b3(1) b4(1)]);
     right = max([b1(1) b2(1) b3(1) b4(1)]);
@@ -84,8 +92,9 @@ end
 
 function f = transform(x,y,m)
     v = [x y 1]';
+    m = m';
     v = m*v;
-    v = [round(v(1)/v(3))+8000 round(v(2)/v(3))+8000];
+    v = [round(v(1)/v(3)) round(v(2)/v(3))];
     f = v;
 end
 
