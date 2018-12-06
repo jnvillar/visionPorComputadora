@@ -8,14 +8,16 @@ lena = imread('imgs/lena.png');
 img_a = rgb2gray(imread('imgs/damero1.jpg'));
 img_b = rgb2gray(imread('imgs/damero2.jpg'));
 
+
 scale = 0.125;
 img_a = imresize(img_a,scale);
 img_b = imresize(img_b,scale);
 
-edges_img_a = scale*[ 870 780; 1167 792; 869 1085; 1162 1090];
-edges_img_b = scale*[612 1739;482 1960; 409 1617; 285 1832];
 
-[edges, ignore] = size(edges_img_a);
+edges_img_a = scale*[ 870 780; 1167 792; 869 1085; 1162 1090];
+
+edges_img_b = scale*[ 285 1832 ; 409 1617; 482 1960; 612 1739];
+[edges, ~] = size(edges_img_a);
 
 
 
@@ -36,17 +38,13 @@ end
 h = V(:,9);
 h = [h(1) h(2) h(3); h(4) h(5) h(6); h(7) h(8) h(9)];
 
-ang = pi/4;
-
-
 
 new_img = res_image(img_a, h);
 offset = offsets(img_a, h);
-[width_original_img, height_original_img] = size(img_a);
-[width, height] = size(new_img);
+[height_original_img, width_original_img] = size(img_a);
+[height, width] = size(new_img);
 
 invh = inv(h);
-
 
 for i=1:width
     for j=1:height
@@ -54,7 +52,7 @@ for i=1:width
         if pos_in_original_img(1) <= 0 || pos_in_original_img(1) > width_original_img || pos_in_original_img(2) <= 0 || pos_in_original_img(2) > height_original_img
         
         else
-            new_img(i,j) = img_a(pos_in_original_img(1),pos_in_original_img(2));
+            new_img(j,i) = img_a(pos_in_original_img(2),pos_in_original_img(1));
         end
     end
 end
@@ -66,7 +64,7 @@ figure; imshow(img_b);
 
 
 function f = offsets(img, h)
-    [X, Y] = size(img);
+    [Y, X] = size(img);
     b1 = transform(1,1,h);
     b2 = transform(X,1,h);
     b3 = transform(1,Y,h);
@@ -79,11 +77,11 @@ end
 function res=generate_correspondence_matrix(img_a_edge, img_b_edge)
     a = img_a_edge;
     b = img_b_edge;
-    res = [0 0 0 (-1)*b(3)*a b(2)*a;(-1)*b(3)*a 0 0 0 (-1)*b(1)*a];
+    res = [0 0 0 (-1)*b(3)*a b(2)*a;(1)*b(3)*a 0 0 0 (-1)*b(1)*a];
 end
 
 function f=res_image(img, h)
-    [X, Y] = size(img);
+    [Y, X] = size(img);
     b1 = transform(1,1,h);
     b2 = transform(X,1,h);
     b3 = transform(1,Y,h);
@@ -96,7 +94,7 @@ function f=res_image(img, h)
     down = max([b1(2) b2(2) b3(2) b4(2)]);
     new_y = abs(up-down);
     
-    f = uint8(zeros(new_x,new_y));
+    f = uint8(ones(new_y,new_x).*100);
 end
 
 function show_selected_edges(img_a, img_b, edges_img_a, edges_img_b)
