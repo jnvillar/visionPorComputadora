@@ -8,15 +8,14 @@ lena = imread('imgs/lena.png');
 img_a = rgb2gray(imread('imgs/damero1.jpg'));
 img_b = rgb2gray(imread('imgs/damero2.jpg'));
 
-
 scale = 0.125;
 img_a = imresize(img_a,scale);
 img_b = imresize(img_b,scale);
 
 
-edges_img_a = scale*[ 870 780; 1167 792; 869 1085; 1162 1090];
+edges_img_a = scale*[ 870 780; 1167 792; 869 1085; 1162 1090; 1451 1391];
 
-edges_img_b = scale*[ 285 1832 ; 409 1617; 482 1960; 612 1739];
+edges_img_b = scale*[ 285 1832 ; 409 1617; 482 1960; 612 1739; 949 1641];
 [edges, ~] = size(edges_img_a);
 
 
