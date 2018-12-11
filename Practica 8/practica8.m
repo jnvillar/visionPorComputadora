@@ -30,10 +30,7 @@ ry = [ cosd(-90) 0         sind(-90); 0        1        0;-sind(-90) 0      cosd
 
 xcam = ry*(x-c)';
 
-% Ejercicio 3
-
-cubo = obtener_puntos();
-
+%Ejericio 3 , jugar con ej2.m
 
 % Ejercicio 4
 
