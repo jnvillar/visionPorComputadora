@@ -32,4 +32,15 @@ xcam = ry*(x-c)';
 
 % Ejercicio 3
 
+cubo = obtener_puntos();
 
+
+% Ejercicio 4
+
+f = 2;
+p = [0 1];
+c = [0 0 1];
+
+x = [f*2/4 f*3/4];
+k = [2 0 0; 0 2 1; 0 0 1];
+p = k * [1 0 0 0; 0 1 0 1 ; 0 0 1 1];
