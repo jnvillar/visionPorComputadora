@@ -1,72 +1,67 @@
-%original_points = [2 2; 3 3; 4 4; 5 5; 6 7; 9 0; 3 0; 3 4; 7 3; 6 5; 8 4; 5 2];
-%figure(1); plot(original_points(:,1),original_points(:,2), 'gx' )
-%hold on
-function p=ransac(original_points, max_distance)
+function h=ransac(correspondence_points1, correspondence_points2, iterations, threshold)
+    
+    [total_points, ~] = size(correspondence_points1);
+    
+    if total_points < 4
+        disp('RANSAC: Al menos se deben tener 4 correspondencias');
+        return;
+    end
+    
+    min_outliers_h = -1;
+    min_outliers_number = inf;
 
-
-    [amount_of_points, ~] = size(original_points);
-    iterations = 1000;
-    thresshold = 1;
-
-    max_close_points = 0;
-    res_slope = 0;
-    res_intercept = 0;
-    res_point_one = [];
-    res_point_two = [];
-
-    for i=1:iterations 
-        points = two_random_points(original_points);
-        point_one = points(1,:);
-        point_two = points(2,:);
-
-        slope = (point_two(2) - point_one(2)) / (point_two(1) - point_one(1));
-        intercept = point_one(2) - slope * point_one(1);
-        amount_of_close_points = 0;
-
-        for j=1:amount_of_points
-            d = distance(original_points(j,:), slope, intercept);
-            if d < thresshold
-                amount_of_close_points = amount_of_close_points + 1;
+    for i=1:iterations
+        points = four_random_points(total_points, correspondence_points1);
+        points_c1 = correspondence_points1(points,:);
+        points_c2 = correspondence_points2(points,:);
+        h = dlt(points_c1, points_c2);
+        outliers_i = 0;
+        for j=1:total_points
+            p1 = correspondence_points1(j,:);
+            p2 = correspondence_points2(j,:);
+            
+            transfer_error = calcualte_transfer_error(p1, p2, h);
+            if (transfer_error > threshold)
+                outliers_i = outliers_i + 1;
             end
         end
-
-        if amount_of_close_points > max_close_points
-            max_close_points = amount_of_close_points;
-            res_slope = slope;
-            res_intercept = intercept;
-            res_point_one = point_one;
-            res_point_two = point_two;
+        
+        if outliers_i < min_outliers_number
+            min_outliers_number = outliers_i;
+            min_outliers_h = h;
         end
     end
+    h = min_outliers_h;
+end
 
+function te = calcualte_transfer_error(p1, p2, h)
+    p1h = transform(p1(1), p1(2), h);
+    p2invh = transform(p2(1), p2(2), inv(h));
+    te = pdist([p1h ; p2]).^2 + pdist([p1 ; p2invh]).^2;
+end
+
+function p = four_random_points(total_points, points)
     p = [];
-    amount = 0;
-    for i=1:amount_of_points
-        if distance(original_points(i,:),res_slope,res_intercept) <= max_distance
-            amount = amount+1;
-            p(amount,:) = original_points(i,:);
+    n = 4;
+    while n > 0
+        point = random_point(total_points);           
+        if ~ismember(point, p)
+            if n == 2 && collinear(points(p(1),:), points(p(2),:), points(point,:))
+                continue
+            elseif n == 1 && (collinear(points(p(1),:), points(p(2),:), points(point,:)) || collinear(points(p(2),:), points(p(3),:), points(point,:)) || collinear(points(p(1),:), points(p(3),:), points(point,:)))
+                continue
+            end
+            p = [p ; point];
+            n = n - 1;
         end
     end
 end
-%plot([res_point_one(1) res_point_two(1)],[res_point_one(2) res_point_two(2)], 'Color', 'red', 'LineStyle', '--');
-%hold off
 
-function f = distance(point, slope, intercept)
-    f = abs(slope*point(1) - point(2) + intercept)/(sqrt(slope*slope + 1));
+function p = random_point(total_points)
+    p = ceil(rand() * total_points);
 end
 
-function f = two_random_points(points)
-    point_one = random_point(points);
-    point_two = random_point(points);
-    while point_one(1) == point_two(1)
-         point_two = random_point(points);
-    end
-    f = [point_one ; point_two];
-end
-
-
-function f = random_point(points)
-    [X, ~] = size(points);
-    random_position = ceil(rand()*X);
-    f = points(random_position,:);
+function tf = collinear(p1, p2, p3)
+    mat = [p1(1)-p3(1) p1(2)-p3(2); p2(1)-p3(1) p2(2)-p3(2)];
+    tf = det(mat) == 0;
 end

@@ -1,116 +1,86 @@
 filepath = fileparts(mfilename('fullpath'));
 addpath(strcat(filepath, '/../imgs'));
-addpath(strcat(filepath, '/../Practica 3'));
 
-
-
-lena = imread('imgs/lena.png');
 img_a = rgb2gray(imread('imgs/damero1.jpg'));
 img_b = rgb2gray(imread('imgs/damero2.jpg'));
 
-scale = 0.125;
+% Ejercicio 1
+
+
+% a) 4 pares de correspondencias
+
+scale = 0.100;
 img_a = imresize(img_a,scale);
 img_b = imresize(img_b,scale);
 
+% edges_img_a = scale*[ 870 780; 1167 792; 869 1085; 1162 1090; 1451 1391];
+% edges_img_b = scale*[ 285 1832 ; 409 1617; 482 1960; 612 1739; 949 1641];
 
-edges_img_a = scale*[ 870 780; 1167 792; 869 1085; 1162 1090; 1451 1391];
+edges_img_a = scale*[870 780 ; 1167 792 ; 869 1085 ; 1451 1391];
+edges_img_b = scale*[285 1832 ; 409 1617 ; 482 1960 ; 949 1641];
 
-edges_img_b = scale*[ 285 1832 ; 409 1617; 482 1960; 612 1739; 949 1641];
-[edges, ~] = size(edges_img_a);
+h_a = dlt(edges_img_a, edges_img_b);
+img_dlt_a = apply_transformation(img_a, h_a);
 
-
-
-corresponde_matrixes = zeros(2*edges, 9);
-
-for i=1:edges
-    an_edge_a = edges_img_a(i,:);
-    an_edge_b = edges_img_b(i,:);
-    proyective_point_a = [an_edge_a 1];
-    proyective_point_b = [an_edge_b 1];
-    correspondence_matrix = generate_correspondence_matrix(proyective_point_a, proyective_point_b);
-    corresponde_matrixes(2*(i-1)+1,:) = correspondence_matrix(1,:);
-    corresponde_matrixes(2*(i-1)+2,:) = correspondence_matrix(2,:);
-end
+figure('Name','DLT - 4 correspondencias (original - original rotada - rotada por DLT)');
+montage({img_a, img_b, img_dlt_a}, 'Size', [1 NaN])
 
 
-[U,S,V] = svd(corresponde_matrixes);
-h = V(:,9);
-h = [h(1) h(2) h(3); h(4) h(5) h(6); h(7) h(8) h(9)];
+% b) Muchos pares de correspondencias (obtenemos las correspondencias
+% usando SURF)
+
+h_b = calculate_homography_dlt(img_a, img_b, 'Surf');
+img_dlt_b = apply_transformation(img_a, h_b);
+
+figure('Name','DLT - Muchas correspondencias (original - original rotada - rotada por DLT)');
+montage({img_a, img_b, img_dlt_b}, 'Size', [1 NaN])
 
 
-new_img = res_image(img_a, h);
-offset = offsets(img_a, h);
-[height_original_img, width_original_img] = size(img_a);
-[height, width] = size(new_img);
-
-invh = inv(h);
-
-for i=1:width
-    for j=1:height
-        pos_in_original_img = transform(i + offset(1),j + offset(2),invh);
-        if pos_in_original_img(1) <= 0 || pos_in_original_img(1) > width_original_img || pos_in_original_img(2) <= 0 || pos_in_original_img(2) > height_original_img
-        
-        else
-            new_img(j,i) = img_a(pos_in_original_img(2),pos_in_original_img(1));
-        end
-    end
-end
+% Ejercicio 2
 
 
-figure; imshow(new_img);
-figure; imshow(img_a);
-figure; imshow(img_b);
+% a) Ransac sobre Damero
+
+h_ransac_damero = calculate_homography_ransac(img_a, img_b, 50, 5, 'Surf');
+img_ransac_damero = apply_transformation(img_a, h_ransac_damero);
+
+figure('Name','Ransac sobre Damero - Muchas correspondencias (original - original rotada - rotada por DLT refinada con Ransac)');
+montage({img_a, img_b, img_ransac_damero}, 'Size', [1 NaN]);
 
 
-function f = offsets(img, h)
-    [Y, X] = size(img);
-    b1 = transform(1,1,h);
-    b2 = transform(X,1,h);
-    b3 = transform(1,Y,h);
-    b4 = transform(X,Y,h);
-    left = min([b1(1) b2(1) b3(1) b4(1)]);
-    up = min([b1(2) b2(2) b3(2) b4(2)]);
-    f = [left, up];
-end
+% b) Ransac sobre otras imagenes
 
-function res=generate_correspondence_matrix(img_a_edge, img_b_edge)
-    a = img_a_edge;
-    b = img_b_edge;
-    res = [0 0 0 (-1)*b(3)*a b(2)*a;(1)*b(3)*a 0 0 0 (-1)*b(1)*a];
-end
+img_a = imread('imgs/lena.png');
+img_b = imrotate(img_a,-30);
 
-function f=res_image(img, h)
-    [Y, X] = size(img);
-    b1 = transform(1,1,h);
-    b2 = transform(X,1,h);
-    b3 = transform(1,Y,h);
-    b4 = transform(X,Y,h);
-    left = min([b1(1) b2(1) b3(1) b4(1)]);
-    right = max([b1(1) b2(1) b3(1) b4(1)]);
-    new_x = abs(left-right);
-    
-    up = min([b1(2) b2(2) b3(2) b4(2)]);
-    down = max([b1(2) b2(2) b3(2) b4(2)]);
-    new_y = abs(up-down);
-    
-    f = uint8(ones(new_y,new_x).*100);
-end
+h_ransac_lena = calculate_homography_ransac(img_a, img_b, 50, 5, 'Surf');
+img_ransac_lena = apply_transformation(img_a, h_ransac_lena);
 
-function show_selected_edges(img_a, img_b, edges_img_a, edges_img_b)
-    img_a = insertMarker(img_a,edges_img_a,'plus', 'color', 'green', 'size', 100);
-    imb_b = insertMarker(img_b,edges_img_b,'plus', 'color', 'green', 'size', 100);
+figure('Name','Ransac sobre Lena - Muchas correspondencias (original - original rotada - rotada por DLT refinada con Ransac)');
+montage({img_a, img_b, img_ransac_lena}, 'Size', [1 NaN]);
 
-    figure; imshow(img_a);
-    figure; imshow(imb_b);
-end
+img_a = imread('imgs/test.png');
+img_b = imrotate(img_a,80);
 
-function f = transform(x,y,m)
+h_ransac_test = calculate_homography_ransac(img_a, img_b, 50, 5, 'Surf');
+img_ransac_test = apply_transformation(img_a, h_ransac_test);
 
-    v = [x y 1]';
-    v = m*v;
-    f = [round(v(1)/v(3)) round(v(2)/v(3))];
-end
+figure('Name','Ransac sobre Test - Muchas correspondencias (original - original rotada - rotada por DLT refinada con Ransac)');
+montage({img_a, img_b, img_ransac_test}, 'Size', [1 NaN]);
 
+img_a = imread('imgs/flinstones.png');
+img_b = imrotate(img_a,80);
+
+h_ransac_flinstones = calculate_homography_ransac(img_a, img_b, 50, 5, 'Surf');
+img_ransac_flinstones = apply_transformation(img_a, h_ransac_flinstones);
+
+figure('Name','Ransac sobre Flinstones - Muchas correspondencias (original - original rotada - rotada por DLT refinada con Ransac)');
+montage({img_a, img_b, img_ransac_flinstones}, 'Size', [1 NaN]);
+
+% OBS: Funciona bien con todas excepto con Damero. Lo que pasa es que el
+% matchFeatures de matlab no anda muy bien con esta imagen ya que hay
+% muchos puntos similares. Por lo tanto los puntos a partir de los cuales
+% se genera la transforamcion no son buenos
 
 
 
