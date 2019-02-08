@@ -2,6 +2,15 @@ import numpy as np
 from matplotlib import pyplot as plt
 import cv2
 
+
+
+def intersection(line1, line2):
+	p1, p2, p3, p4 = line1['p1'], line1['p2'], line2['p1'], line2['p2']
+	x = ((p1[0]*p2[1] - p1[1]*p2[0]) * (p3[0]-p4[0]) - (p1[0]-p2[0]) * (p3[0]*p4[1] - p3[1]*p4[0])) / ((p1[0]-p2[0]) * (p3[1]-p4[1]) - (p1[1]-p2[1]) * (p3[0]-p4[0]))
+	y = ((p1[0]*p2[1] - p1[1]*p2[0]) * (p3[1]-p4[1]) - (p1[1]-p2[1]) * (p3[0]*p4[1] - p3[1]*p4[0])) / ((p1[0]-p2[0]) * (p3[1]-p4[1]) - (p1[1]-p2[1]) * (p3[0]-p4[0]))
+	return (x,y)
+
+
 cap = cv2.VideoCapture('video.mp4')
 
 out = cv2.VideoWriter('output.mp4', 0x7634706d, 30.0, (1280,720))
@@ -26,25 +35,24 @@ for frame_index in range(0, end_frame):
 		plt.imshow(frame)
 		points = plt.ginput(100, show_clicks=True)
 		assert len(points)%2==0, 'Points count should be pair'
-		print(points)
-		m = [0]*(len(points)/2)
-		c = [0]*(len(points)/2)
-		k = 0
-		vp = np.array([0,0])
-		for j in range(0,len(points), 2):
-			m[k] = (points[j+1][1] - points[j][0])/ (points[j+1][0] - points[j][0]) 		## TODO: ver si esta bien el eje x y el eje y
-			c[k] = -points[j][0] * m[k] + points[j][1]
-			k += 1
-		count = 0
-		for p in range(len(points)/2):
-			for q in range(p+1, len(points)/2):
-				count = count + 1
-				A = np.array([[-m[p],1], [-m[q],1]])
-				b = np.array([c[p], c[q]])
-				vp = vp + np.linalg.inv(A).dot(b)
-		vp = np.divide(vp, count)
-		vp = np.around(vp)
+		assert len(points)>=4, 'Should be at least two lines'
 
+		print(points)
+		lines = []
+		for i in range(0, len(points), 2):
+			line = {'p1': points[i], 'p2': points[i+1]}
+			lines.append(line)
+
+		print(lines)
+
+		lines_intersection = []
+		for i in range(len(lines)-1):
+			intersec = intersection(lines[i], lines[i+1])
+			lines_intersection.append(intersec)
+
+		x_intersection = list(map(lambda x: x[0], lines_intersection))
+		y_intersection = list(map(lambda x: x[1], lines_intersection))
+		vp = (np.median(x_intersection), np.median(y_intersection))
 		xs = [283, vp[0]]
 		ys = [501, vp[1]]
 		plt.plot(xs,ys,linewidth=2)
