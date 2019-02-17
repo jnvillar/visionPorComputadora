@@ -26,7 +26,11 @@ for frame_index in range(0, end_frame):
 	if frame_index<start_frame:
 		continue
 
+	if frame_index>start_frame:
+		prev_img = frame
+		
 	ret, frame = cap.read()
+
 	if ret==False:
 		break
 
@@ -59,6 +63,79 @@ for frame_index in range(0, end_frame):
 		raw_input("Press Enter to exit")
 		break
 
+	if frame_index>start_frame+1 and frame_index%20 != 0:
+		img = frame
+		plt.imshow(frame)
+		left_most = 9999
+		for i in range(len(S)):
+			BB = S[i].bounding_box
+			if (BB[0]+(BB[2]/2)<115 or BB[0]+(BB[2]/2)>130) and (BB[1]+(BB[3]/2)<990 or BB[1]+(BB[3]/2)>1010):
+				if S[i].bounding_box[0]<1:
+					S[i].bounding_box[0] = 1;
+					BB[0] = S[i].bounding_box[0];
+
+				if(S[i].bounding_box[1]<1):
+					S[i].bounding_box[1] = 1;
+					BB[1] = S[i].bounding_box[1];
+
+				if(S[i].bounding_box[0]+BB[2]>size(img,2)):
+					S[i].bounding_box[2] = size(img,2)-S[i].bounding_box[0];
+					BB[2] = S[i].bounding_box[2];
+
+				if(S[i].bounding_box[1]+BB[3]>size(img,1)):
+					S[i].bounding_box[3] = size(img,1)-S[i].bounding_box[1];
+					BB[3] = S[i].bounding_box[3];
+
+				prev_img_gray = cv2.cvtColor(prev_img, cv2.COLOR_BGR2GRAY)
+
+				points  = cv2.goodFeaturesToTrack(prev_img_gray,S[i].bounding_box)
+				#points = detectMinEigenFeatures(rgb2gray(prev_img),'ROI',S(i).BoundingBox);
+				if len(points) == 0:
+					print('ERROR in points here')
+					continue
+
+				plt.plot(prev_img, points.location, marker='+', color='w') ## esto no va a andar asi
+
+				
+				lk_params = dict(
+					winSize  = (15,15),  
+					maxLevel = 2,   
+					criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03)
+				) ## revisar estos parametros
+
+				points, validity, err = cv2.calcOpticalFlowPyrLK(prev_img, img, points, None, **lk_params) ## deberian estar en gris?
+				mean_x = np.mean(points[0])
+				mean_y = np.mean(points[1])	## esto no esta bien
+				S[i].bounding_box[0] = floor(mean_x - BB[2]/2)
+				S[i].bounding_box[1] = floor(mean_y - BB[4]/2)
+				S[i].bounding_box[2] = BB[2]
+				S[i].bounding_box[3] = BB[3]
+
+				plt.plot(img, points[validity], marker='+') ## esto no va a andar asi
+
+				cv2.rectangle(img, [S[i].bounding_box[1],S[i].bounding_box[2],S[i].bounding_box[3],S[i].bounding_box[4]], color='red') ## tampoco va a andar
+				if Team_Ids(i)==0:
+					plt.annotate(BB[0]-2, BB[1]-2, 'D_T')
+				if Team_Ids(i)==1:
+					plt.annotate(BB[0]-2, BB[1]-2, 'A_T')
+				
+
+				#Calculating the last defender on the left side using vanishing point. Same can be done symmetrically to the right hand side as well.
+				x1 = floor(BB[0] + BB[2]/2)
+				y1 = floor(BB[1] + BB[3])
+				ly = len(img)
+				
+				slope = (vp[1] - y1)/(vp[0] - x1);
+				y_int = - x1 * slope + y1;
+				lx = (ly - y_int)/slope;
+				
+				if lx<left_most and Team_Ids[i] == 0
+					left_most = lx
+
+			
+
+		plt.plot([left_most,vp[0]],[ly ,vp[1]])
+		continue
 
 cap.release()
 out.release()
