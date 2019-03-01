@@ -19,7 +19,7 @@ def imshow_components(labels):
   cv2.waitKey()
 
 # leo imagen
-img = cv2.imread('Input_Aud.PNG');
+img = cv2.imread('images/test_img.png');
 
 # la paso a blanco y negro, y detecto bordes con Canny
 gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
@@ -122,10 +122,7 @@ for c in contours:
   cv2.imshow('box', img)
   cv2.waitKey(0)
 
-# cv2.rectangle(img,(minX,minY),(maxX,maxY),COLOR_MAX,2)
-pts = np.array([[minX,minY],[minX,maxY],[maxX,maxY],[maxX,minY]], np.int32)
-pts = pts.reshape((-1,1,2))
-cv2.polylines(img,[pts],True,(0,255,255))
+cv2.rectangle(img,(minX,minY),(maxX,maxY),COLOR_MAX,2)
 
 cv2.imshow('box', img)
 cv2.waitKey(0)
