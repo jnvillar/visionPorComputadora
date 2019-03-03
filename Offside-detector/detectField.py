@@ -3,6 +3,14 @@ from matplotlib import pyplot as plt
 import numpy as np
 import cv2 as cv2
 
+from numpy.linalg import norm
+
+def distance_line_to_point(line, point):
+  line = np.array(line)
+  point = np.array(point)
+  return norm(np.cross(line[1]-line[0], line[0]-point))/norm(line[1]-line[0])
+
+
 def imshow_components(labels):
   # Map component labels to hue val
   label_hue = np.uint8(179*labels/np.max(labels))
@@ -19,7 +27,7 @@ def imshow_components(labels):
   cv2.waitKey()
 
 # leo imagen
-img = cv2.imread('images/test_img.png');
+img = cv2.imread('images/test_img5.png');
 
 # la paso a blanco y negro, y detecto bordes con Canny
 gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
@@ -99,6 +107,7 @@ cv2.waitKey(0)
 
 contours, hierarchy = cv2.findContours(im_out,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
 
+'''
 minX = 999999999
 maxX = -1
 minY = 999999999
@@ -126,6 +135,43 @@ cv2.rectangle(img,(minX,minY),(maxX,maxY),COLOR_MAX,2)
 
 cv2.imshow('box', img)
 cv2.waitKey(0)
+'''
 
-# cv2.waitKey(0)
+## TODO: estamos asumiendo que siempre se ataca para la izquierda
+lateral_line = [(100, maxRho),(500, maxRho)]
+print('lateral_line', lateral_line)
+
+corner_point = (10000, 10000)
+MAX_DISTANCE = 10
+print(contours[0])
+
+interesting_points = [p for contour in contours for c in contour for p in c]
+for p in interesting_points:
+  if distance_line_to_point(lateral_line, p) < MAX_DISTANCE:
+      corner_point = p if p[0] < corner_point[0] else corner_point
+      
+corner_point = corner_point.tolist()
+corner_point = (corner_point[0], corner_point[1])
+
+print('corner_point', corner_point)
+
+
+## TODO: esto no tiene que estar hardcodeado.
+vp = (316.1104416889022, -479.7340279904983)
+
+
+coefficients = np.polyfit((vp[0], corner_point[0]), (vp[1], corner_point[1]), 1)
+print('coefficients', coefficients)
+
+
+new_image = img
+for y in range(len(img)):
+  for x in range(len(img[0])):
+    if y < (x*coefficients[0]+coefficients[1]):
+      new_image[y][x] = 0
+
+cv2.imshow('new',img)
+cv2.waitKey(0)
+
+
 # cv2.destroyAllWindows()
