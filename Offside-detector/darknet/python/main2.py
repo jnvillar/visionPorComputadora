@@ -22,10 +22,16 @@ def intersection(line1, line2):
 def update_bounding_box(frame, tracker, send_end):
 	(img_h, img_w) = frame.shape[:2]
 	send_end.send(tracker.update(frame))
+
+def same_lines(line1, line2):
+	rho1,theta1 = line1
+	rho2,theta2 = line2
+	return abs(rho1-rho2) < 20 and abs(theta1-theta2) < 0.1
 	
 
 BOUNDING_BOX_END_LIMIT = 100
-
+CSRT_PARAMS = cv2.FileStorage("CSRT_params.json", cv2.FileStorage_READ)
+KCF_PARAMS = cv2.FileStorage("KCF_params.json", cv2.FileStorage_READ)
 
 cap = cv2.VideoCapture('../video.mp4')
 
@@ -50,7 +56,57 @@ for frame_index in range(0, end_frame):
 	
 	if frame_index==start_frame:
 		
+		gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+		blur_gray = cv2.GaussianBlur(gray_frame,(5, 5),0)
 
+		sobelx = cv2.Sobel(blur_gray,cv2.CV_8U,1,0,ksize=-1)
+		#cv2.imshow('sobelx',sobelx)
+
+		
+
+		lines = cv2.HoughLines(sobelx,1,np.pi/180,200)
+		
+		parallel_lines = []
+		i = 0
+		j = 0
+		
+		for j in range(len(lines)):
+			for i in range(len(lines[j])):
+				if len(parallel_lines) == 2:
+					break
+				rho,theta = lines[j][i]
+				if not (len(parallel_lines) == 1 and same_lines(lines[j][i], (first_rho,first_theta))):
+					print(rho,theta)
+					a = np.cos(theta)
+					b = np.sin(theta)
+					x0 = a*rho
+					y0 = b*rho
+					x1 = int(x0 + 1000*(-b))
+					y1 = int(y0 + 1000*(a))
+					x2 = int(x0 - 1000*(-b))
+					y2 = int(y0 - 1000*(a))	
+
+					first_rho, first_theta = rho,theta
+					parallel_lines.append({'p1': (x1,y1), 'p2': (x2,y2)})
+
+			
+		x1,y1 = parallel_lines[0]['p1']
+		x2,y2 = parallel_lines[0]['p2']
+		cv2.line(frame,(x1,y1),(x2,y2),(0,0,255),2)
+
+		x1,y1 = parallel_lines[1]['p1']
+		x2,y2 = parallel_lines[1]['p2']
+		cv2.line(frame,(x1,y1),(x2,y2),(0,0,255),2)
+
+		vanishing_point = intersection(parallel_lines[0], parallel_lines[1])
+		print('vanishing_point', vanishing_point)
+		xs = (280, vanishing_point[0])
+		ys = (501, vanishing_point[1])
+		#cv2.line(frame,xs,ys,(255,255,0),2)
+		cv2.line(frame,vanishing_point,(280,501),(255,255,0),2)
+
+		cv2.imshow('hough',frame)
+		raw_input('Continue?')
 		### Deteccion linea offside
 		'''
 		plt.imshow(frame)
@@ -96,7 +152,6 @@ for frame_index in range(0, end_frame):
 		player_trackers = []
 
 		
-
 		for i in range(len(res)):
 			bb = res[i]
 			bounding_box = bb[2]
@@ -105,7 +160,10 @@ for frame_index in range(0, end_frame):
 			w = int(bounding_box[2]/2)
 			h = int(bounding_box[3]/2)
 			
-			tracker = cv2.TrackerCSRT_create()
+			#tracker = cv2.TrackerCSRT_create()
+			#tracker.read(CSRT_PARAMS.getFirstTopLevelNode())
+			tracker = cv2.TrackerKCF_create()
+			tracker.read(KCF_PARAMS.getFirstTopLevelNode())
 			tracker.init(frame, (x-w, y-h, w*2, h*2))
 			player_trackers.append(tracker)
 
