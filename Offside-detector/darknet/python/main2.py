@@ -43,7 +43,7 @@ if (not cap.isOpened()):
 #player_detector = PlayerDetector()
 
 start_frame = 0
-end_frame = 100
+end_frame = 300
 for frame_index in range(0, end_frame):
 	print(frame_index)
 	if frame_index<start_frame:
@@ -54,59 +54,62 @@ for frame_index in range(0, end_frame):
 	if ret==False:
 		break
 	
+	gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+	blur_gray = cv2.GaussianBlur(gray_frame,(5, 5),0)
+
+	sobelx = cv2.Sobel(blur_gray,cv2.CV_8U,1,0,ksize=-1)
+	#cv2.imshow('sobelx',sobelx)
+
+	
+
+	lines = cv2.HoughLines(sobelx,1,np.pi/180,200)
+	
+	parallel_lines = []
+	i = 0
+	j = 0
+	
+	for j in range(len(lines)):
+		for i in range(len(lines[j])):
+			if len(parallel_lines) == 2:
+				break
+			rho,theta = lines[j][i]
+			if not (len(parallel_lines) == 1 and same_lines(lines[j][i], (first_rho,first_theta))):
+				a = np.cos(theta)
+				b = np.sin(theta)
+				x0 = a*rho
+				y0 = b*rho
+				x1 = int(x0 + 1000*(-b))
+				y1 = int(y0 + 1000*(a))
+				x2 = int(x0 - 1000*(-b))
+				y2 = int(y0 - 1000*(a))	
+
+				first_rho, first_theta = rho,theta
+				parallel_lines.append({'p1': (x1,y1), 'p2': (x2,y2)})
+				try:
+					if len(parallel_lines) == 2 and intersection(parallel_lines[0], parallel_lines[1])[1] > 0:
+						parallel_lines.pop()
+				except:
+					## lines are parallel
+					parallel_lines.pop()
+
+		
+	x1,y1 = parallel_lines[0]['p1']
+	x2,y2 = parallel_lines[0]['p2']
+	cv2.line(frame,(x1,y1),(x2,y2),(0,0,255),2)
+
+	x1,y1 = parallel_lines[1]['p1']
+	x2,y2 = parallel_lines[1]['p2']
+	cv2.line(frame,(x1,y1),(x2,y2),(0,0,255),2)
+
+	vanishing_point = intersection(parallel_lines[0], parallel_lines[1])
+	xs = (280, vanishing_point[0])
+	ys = (501, vanishing_point[1])
+	cv2.line(frame,vanishing_point,(280,501),(255,255,0),2)
+
+
 	if frame_index==start_frame:
 		
-		gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-		blur_gray = cv2.GaussianBlur(gray_frame,(5, 5),0)
-
-		sobelx = cv2.Sobel(blur_gray,cv2.CV_8U,1,0,ksize=-1)
-		#cv2.imshow('sobelx',sobelx)
-
 		
-
-		lines = cv2.HoughLines(sobelx,1,np.pi/180,200)
-		
-		parallel_lines = []
-		i = 0
-		j = 0
-		
-		for j in range(len(lines)):
-			for i in range(len(lines[j])):
-				if len(parallel_lines) == 2:
-					break
-				rho,theta = lines[j][i]
-				if not (len(parallel_lines) == 1 and same_lines(lines[j][i], (first_rho,first_theta))):
-					print(rho,theta)
-					a = np.cos(theta)
-					b = np.sin(theta)
-					x0 = a*rho
-					y0 = b*rho
-					x1 = int(x0 + 1000*(-b))
-					y1 = int(y0 + 1000*(a))
-					x2 = int(x0 - 1000*(-b))
-					y2 = int(y0 - 1000*(a))	
-
-					first_rho, first_theta = rho,theta
-					parallel_lines.append({'p1': (x1,y1), 'p2': (x2,y2)})
-
-			
-		x1,y1 = parallel_lines[0]['p1']
-		x2,y2 = parallel_lines[0]['p2']
-		cv2.line(frame,(x1,y1),(x2,y2),(0,0,255),2)
-
-		x1,y1 = parallel_lines[1]['p1']
-		x2,y2 = parallel_lines[1]['p2']
-		cv2.line(frame,(x1,y1),(x2,y2),(0,0,255),2)
-
-		vanishing_point = intersection(parallel_lines[0], parallel_lines[1])
-		print('vanishing_point', vanishing_point)
-		xs = (280, vanishing_point[0])
-		ys = (501, vanishing_point[1])
-		#cv2.line(frame,xs,ys,(255,255,0),2)
-		cv2.line(frame,vanishing_point,(280,501),(255,255,0),2)
-
-		cv2.imshow('hough',frame)
-		raw_input('Continue?')
 		### Deteccion linea offside
 		'''
 		plt.imshow(frame)
