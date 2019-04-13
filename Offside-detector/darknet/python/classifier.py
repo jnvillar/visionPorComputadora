@@ -1,11 +1,20 @@
+import cv2
+import numpy as np
+
+
 class Classifier:
 
     def __init__(self):
         self.player_histograms = []
-        self.players_bb = []
-        self.buckets_per_color = 3
+        self.buckets_per_color = 200
 
     def classify(self, bounding_box, frame):
+        player_histogram = self.calculate_histogram(frame, bounding_box)
+        self.player_histograms.append(player_histogram)
+
+    def calculate_mask(self, frame, bounding_box):
+        mask = np.zeros(frame.shape[:2], np.uint8)
+
         x = int(bounding_box[0])
         y = int(bounding_box[1])
         w = int(bounding_box[2])
@@ -14,31 +23,21 @@ class Classifier:
         initial_x = int(x - (w / 2))
         initial_y = int(y - (h / 2))
 
-        player_histogram = {}
+        mask[initial_y: initial_y + h, initial_x: initial_x + w] = 255
+        return mask
 
-        for i in range(initial_x, initial_x + w):
-            for j in range(initial_y, initial_y + h):
-                self.add_to_histogram(player_histogram, frame[j,i])
-
-        self.player_histograms.append(player_histogram)
-        self.players_bb.append(bounding_box)
-
-    def add_to_histogram(self, player_histogram, pixel):
-        bucket_1 = self.bucket_for_pixel(pixel[0])
-        bucket_2 = self.bucket_for_pixel(pixel[1])
-        bucket_3 = self.bucket_for_pixel(pixel[2])
-
-        key = (bucket_1, bucket_2, bucket_3)
-        player_histogram[key] = player_histogram.get(key, 0) + 1
-
-    def bucket_for_pixel(self, number):
-        bucket_size = int(255/self.buckets_per_color)
-        return int(number/bucket_size)
+    def calculate_histogram(self, frame, bounding_box):
+        mask = self.calculate_mask(frame, bounding_box)
+        h1 = cv2.calcHist([frame], [0], mask, [self.buckets_per_color], [0, 256])
+        h2 = cv2.calcHist([frame], [1], mask, [self.buckets_per_color], [0, 256])
+        h3 = cv2.calcHist([frame], [2], mask, [self.buckets_per_color], [0, 256])
+        return {'b': h1, 'g': h2, 'r': h3, 'bb': bounding_box}
 
     def histogram_distance(self, h1, h2):
         diff = 0
-        for k, v in h1.iteritems():
-            diff += abs(v - h2.get(k, 0))
+        diff += cv2.compareHist(h1['r'], h2['r'], method=cv2.HISTCMP_INTERSECT)
+        diff += cv2.compareHist(h1['g'], h2['g'], method=cv2.HISTCMP_INTERSECT)
+        diff += cv2.compareHist(h1['b'], h2['b'], method=cv2.HISTCMP_INTERSECT)
         return diff
 
     def max_histogram_diff(self, histogram, players_histograms):
@@ -51,32 +50,81 @@ class Classifier:
                 i = idx
         return i
 
-    def get_teams(self):
-        players_histograms = self.player_histograms
-        players_bb = self.players_bb
+    def calculate_distances(self, player_histograms):
+        players = len(player_histograms)
+        distances = np.zeros((players, players))
+        in_process = 0
+        for player_hh in player_histograms:
+            next = in_process + 1
+            while next < players:
+                distance = self.histogram_distance(player_hh, player_histograms[next])
+                distances[in_process, next] = distance
+                distances[next, in_process] = distance
+                next += 1
+            in_process += 1
+        return distances
 
-        team_one = [players_bb[0]]
-        team_one_player_histogram = players_histograms[0]
+    def max_difference(self, matrix):
+        max_i = 0
+        max_j = 0
+        max = 0
+        for i in range(len(matrix)):
+            for j in range(len(matrix)):
+                if max < matrix[i, j]:
+                    max_i = i
+                    max_j = j
+                    max = matrix[i, j]
+        return max_i, max_j
 
-        players_histograms.pop(0)
-        players_bb.pop(0)
+    def difference_with_others(self, i, distances):
+        sum = 0
+        for x in range(len(distances)):
+            sum += distances[i][x]
+        return sum
 
-        i = self.max_histogram_diff(team_one_player_histogram, players_histograms)
-        team_two_player_histogram = players_histograms[i]
-        team_two = [players_bb[i]]
+    def max_distance_with_others(self, distances):
+        i = 0
+        max = 0
+        for p in range(len(distances)):
+            dist = self.difference_with_others(p, distances)
+            if max < dist:
+                max = dist
+                i = p
+        return i
 
-        players_histograms.pop(i)
-        players_bb.pop(i)
+    def delete_referees(self, referees, distances, players_bb):
+        for _ in range(referees):
+            i = self.max_distance_with_others(distances)
+            for p in range(len(distances)):
+                distances[i][p] = 0
+            players_bb.pop(i)
+        return players_bb
 
-        for idx, player_histogram in enumerate(players_histograms):
-            d1 = self.histogram_distance(team_one_player_histogram, player_histogram)
-            d2 = self.histogram_distance(team_two_player_histogram, player_histogram)
-            print('distance')
-            print(d1)
-            print(d2)
+
+    def get_teams(self, referee = 0):
+        players_bb = self.player_histograms
+        distances = self.calculate_distances(players_bb)
+
+        players_bb = self.delete_referees(referee, distances, players_bb)
+        distances = self.calculate_distances(players_bb)
+
+        player_one_i, player_two_j = self.max_difference(distances)
+
+        team_one = [players_bb[player_one_i]]
+        team_two = [players_bb[player_two_j]]
+
+        players_bb.pop(player_one_i)
+        players_bb.pop(player_two_j-1)
+
+        for idx, player_histogram in enumerate(players_bb):
+            d1 = self.histogram_distance(team_one[0], player_histogram)
+            d2 = self.histogram_distance(team_two[0], player_histogram)
             if d1 < d2:
                 team_one.append(players_bb[idx])
             else:
                 team_two.append(players_bb[idx])
+
+        team_one = [player['bb'] for player in team_one]
+        team_two = [player['bb'] for player in team_two]
 
         return team_one, team_two

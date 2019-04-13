@@ -3,6 +3,7 @@ import cv2
 from darknet import PlayerDetector
 from imutils.video import FPS
 from classifier import Classifier
+from drawer import Drawer
 
 def intersection(line1, line2):
 	p1, p2, p3, p4 = line1['p1'], line1['p2'], line2['p1'], line2['p2']
@@ -14,6 +15,7 @@ def intersection(line1, line2):
 cap = cv2.VideoCapture('../video.mp4')
 out = cv2.VideoWriter('../output.mp4', 0x7634706d, 30.0, (1280,720))
 classifier = Classifier()
+drawer = Drawer()
 
 if (not cap.isOpened()):
 	raise Exception('Video cound not be opened')
@@ -28,6 +30,7 @@ for frame_index in range(0, 1):
 		continue
 
 	ret, frame = cap.read()
+	print('pixel', frame[0,0])
 	if ret==False:
 		break
 
@@ -65,10 +68,12 @@ for frame_index in range(0, 1):
 		
 		### Deteccion jugadores
 		
-		yolo_img = player_detector.open_img(frame)
-		res = player_detector.detect_players(yolo_img)
-		
-		res = [r for r in res if r[1] > 0.6] 
+		##yolo_img = player_detector.open_img(frame)
+		##res = player_detector.detect_players(yolo_img)
+		##res = [r for r in res if r[1] > 0.6]
+
+		res = [('person', 0.9896788001060486, (367.18341064453125, 437.80145263671875, 38.514793395996094, 69.6651611328125)), ('person', 0.9813730120658875, (291.65362548828125, 585.266357421875, 47.23373031616211, 89.79061889648438)), ('person', 0.9451802372932434, (1184.445068359375, 438.14361572265625, 27.63399887084961, 70.66059875488281)), ('person', 0.9427978992462158, (613.549072265625, 310.9805603027344, 28.87258529663086, 47.110721588134766)), ('person', 0.9319689273834229, (1070.2806396484375, 212.15731811523438, 16.6505184173584, 33.18511962890625)), ('person', 0.9279605746269226, (298.9461975097656, 471.6380310058594, 60.612213134765625, 70.96109008789062)), ('person', 0.8941689133644104, (917.6439208984375, 270.20245361328125, 17.11932373046875, 29.22058868408203)), ('person', 0.8926199078559875, (1047.6141357421875, 487.6801452636719, 26.599294662475586, 70.4723892211914)), ('person', 0.8923733830451965, (688.3287353515625, 300.2090759277344, 17.36338233947754, 54.863426208496094)), ('person', 0.8835442066192627, (1109.42041015625, 202.57579040527344, 17.15543556213379, 30.07115936279297)), ('person', 0.8802978992462158, (828.4103393554688, 457.4922180175781, 54.69183349609375, 60.64540100097656)), ('person', 0.8713310360908508, (856.3143920898438, 386.87445068359375, 37.859336853027344, 45.99755096435547)), ('person', 0.7614070773124695, (1156.033203125, 520.9886474609375, 39.83382034301758, 65.85809326171875)), ('person', 0.7554710507392883, (530.2201538085938, 142.78485107421875, 15.13008975982666, 29.750947952270508))]
+
 		
 		frame_copy = frame.copy()
 		### TODO: filtras detecciones con poca probabilidad (o que no sean personas)
@@ -92,21 +97,9 @@ for frame_index in range(0, 1):
 			#cv2.rectangle(frame_copy, (x-w, y-h), (x + w, y + h), (0, 0, 255), 2)
 			classifier.classify(bounding_box, frame_copy)
 
-		t1, t2 = classifier.get_teams()
-		print(len(t1))
-		print(len(t2))
-		for b in t1:
-			x = int(b[0])
-			y = int(b[1])
-			w = int(b[2] / 2)
-			h = int(b[3] / 2)
-			cv2.rectangle(frame_copy, (x - w, y - h), (x + w, y + h), (0, 0, 255), 2)
-		for b in t2:
-			x = int(b[0])
-			y = int(b[1])
-			w = int(b[2] / 2)
-			h = int(b[3] / 2)
-			cv2.rectangle(frame_copy, (x - w, y - h), (x + w, y + h), (0, 255, 0), 2)
+		t1, t2 = classifier.get_teams(referee=0)
+		drawer.draw_team(frame_copy, t1, (0, 0, 255))
+		drawer.draw_team(frame_copy, t2, (0, 255, 0))
 
 		cv2.imshow('img', frame_copy)
 		cv2.waitKey(0)
@@ -114,7 +107,6 @@ for frame_index in range(0, 1):
 		fps = FPS().start()
 
 		prev_img = frame
-
 		continue
 
 	
@@ -135,8 +127,6 @@ for frame_index in range(0, 1):
 
 
 	for i in range(len(player_trackers)):
-
-		
 		(img_h, img_w) = frame.shape[:2]
 		(success, box) = player_trackers[i].update(frame)
 		if success:
