@@ -1,7 +1,9 @@
 import cv2
 import numpy as np
-
-
+from sklearn.cluster import KMeans
+import pandas as pd
+from sklearn.decomposition import PCA
+from matplotlib import pyplot as plt
 class Classifier:
 
     def __init__(self):
@@ -102,6 +104,52 @@ class Classifier:
 
 
     def get_teams(self, referee = 0):
+        team_one, team_two = [], []
+        
+        for player in self.player_histograms:
+            player['attrs'] =  []
+            for col in ['g','b', 'r']:
+                player['attrs'].extend(player[col].ravel())
+
+        m = [ 0,  6,  8,  9, 10]
+        b = [ 1,  3,  4,  5,  7, 11, 12]
+        r = [2,13]
+        
+        color = ('b','g','r')
+        for j,player in enumerate(self.player_histograms):
+            if j in m:
+                for i,col in enumerate(color):
+                    
+                    histr = player[col]
+                    plt.subplot(3,1,i+1)
+                    plt.plot(histr,color = col)
+                    plt.title('player {}'.format(j))
+                    plt.xlim([0,256])
+                plt.show()
+                #cv2.waitKey(0)
+                #raw_input('continue?')
+        
+
+        players_attributes = list(pd.DataFrame(self.player_histograms).attrs)
+
+        pca = PCA(n_components=5)
+        #import ipdb; ipdb.set_trace()
+        b = pca.fit_transform(np.array(players_attributes))
+        print(b)
+        print(pca.components_)
+        kmeans = KMeans(n_clusters=3, random_state=0).fit(b)
+        print(kmeans.labels_)
+
+        for i in range(len(b)):
+            if kmeans.labels_[i] == 0:
+                team_one.append(self.player_histograms[i])
+            elif kmeans.labels_[i] == 1:
+                team_two.append(self.player_histograms[i])
+        team_one = [player['bb'] for player in team_one]
+        team_two = [player['bb'] for player in team_two]
+
+
+        '''
         players_bb = self.player_histograms
         distances = self.calculate_distances(players_bb)
 
@@ -126,5 +174,5 @@ class Classifier:
 
         team_one = [player['bb'] for player in team_one]
         team_two = [player['bb'] for player in team_two]
-
+        '''
         return team_one, team_two

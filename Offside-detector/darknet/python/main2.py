@@ -20,7 +20,7 @@ drawer = Drawer()
 if (not cap.isOpened()):
 	raise Exception('Video cound not be opened')
 
-player_detector = PlayerDetector()
+#player_detector = PlayerDetector()
 
 start_frame = 0
 end_frame = 100
@@ -76,8 +76,9 @@ for frame_index in range(0, 1):
 
 		
 		frame_copy = frame.copy()
+
 		### TODO: filtras detecciones con poca probabilidad (o que no sean personas)
-		print(res)
+		#print(res)
 		#for bb in res:
 		player_trackers = []
 
@@ -94,8 +95,8 @@ for frame_index in range(0, 1):
 			tracker.init(frame, (x-w, y-h, w*2, h*2))
 			player_trackers.append(tracker)
 
-			#cv2.rectangle(frame_copy, (x-w, y-h), (x + w, y + h), (0, 0, 255), 2)
 			classifier.classify(bounding_box, frame_copy)
+
 
 		t1, t2 = classifier.get_teams(referee=0)
 		drawer.draw_team(frame_copy, t1, (0, 0, 255))
