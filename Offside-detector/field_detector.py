@@ -29,7 +29,7 @@ class FieldDetector:
             cv2.imshow('labeled.png', labeled_img)
             cv2.waitKey()
 
-    def detect_field(self, img):
+    def detect_field(self, img, vp):
         # la paso a blanco y negro, y detecto bordes con Canny
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         edges = cv2.Canny(gray, 100, 200, apertureSize=3)
@@ -165,9 +165,6 @@ class FieldDetector:
 
         if self.debug:
             print('corner_point', corner_point)
-
-        ## TODO: esto no tiene que estar hardcodeado.
-        vp = (316.1104416889022, -479.7340279904983)
 
         coefficients = np.polyfit((vp[0], corner_point[0]), (vp[1], corner_point[1]), 1)
 
