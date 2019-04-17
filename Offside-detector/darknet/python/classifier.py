@@ -30,9 +30,10 @@ class Classifier:
 
     def calculate_histogram(self, frame, bounding_box):
         mask = self.calculate_mask(frame, bounding_box)
-        h1 = cv2.calcHist([frame], [0], mask, [self.buckets_per_color], [0, 256])
-        h2 = cv2.calcHist([frame], [1], mask, [self.buckets_per_color], [0, 256])
-        h3 = cv2.calcHist([frame], [2], mask, [self.buckets_per_color], [0, 256])
+        hsv_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+        h1 = cv2.calcHist([frame], [0], mask, [180], [0, 180])
+        h2 = cv2.calcHist([frame], [1], mask, [255], [0, 255])
+        h3 = cv2.calcHist([frame], [2], mask, [255], [0, 255])
         return {'b': h1, 'g': h2, 'r': h3, 'bb': bounding_box}
 
     def histogram_distance(self, h1, h2):
@@ -117,13 +118,17 @@ class Classifier:
         
         color = ('b','g','r')
         for j,player in enumerate(self.player_histograms):
-            if j in m:
                 for i,col in enumerate(color):
                     
                     histr = player[col]
                     plt.subplot(3,1,i+1)
                     plt.plot(histr,color = col)
-                    plt.title('player {}'.format(j))
+                    if j in m:
+                        plt.title('player Madrid {}'.format(j))
+                    elif j in b:
+                        plt.title('player Barcelona {}'.format(j))
+                    else:
+                        plt.title('player Arbitro {}'.format(j))
                     plt.xlim([0,256])
                 plt.show()
                 #cv2.waitKey(0)
