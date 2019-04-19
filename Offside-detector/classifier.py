@@ -8,6 +8,9 @@ class Classifier:
         self.player_histograms = []
         self.buckets_per_color = 200
 
+    def restart(self):
+        self.player_histograms = []
+
     def classify(self, bounding_box, frame):
         player_histogram = self.calculate_histogram(frame, bounding_box)
         self.player_histograms.append(player_histogram)
@@ -102,29 +105,33 @@ class Classifier:
 
 
     def get_teams(self, referee = 0):
-        players_bb = self.player_histograms
-        distances = self.calculate_distances(players_bb)
+        try:
+            players_bb = self.player_histograms
+            distances = self.calculate_distances(players_bb)
 
-        players_bb = self.delete_referees(referee, distances, players_bb)
-        distances = self.calculate_distances(players_bb)
+            players_bb = self.delete_referees(referee, distances, players_bb)
+            distances = self.calculate_distances(players_bb)
 
-        player_one_i, player_two_j = self.max_difference(distances)
+            player_one_i, player_two_j = self.max_difference(distances)
 
-        team_one = [players_bb[player_one_i]]
-        team_two = [players_bb[player_two_j]]
+            team_one = [players_bb[player_one_i]]
+            team_two = [players_bb[player_two_j]]
 
-        players_bb.pop(player_one_i)
-        players_bb.pop(player_two_j-1)
+            players_bb.pop(player_one_i)
+            players_bb.pop(player_two_j-1)
 
-        for idx, player_histogram in enumerate(players_bb):
-            d1 = self.histogram_distance(team_one[0], player_histogram)
-            d2 = self.histogram_distance(team_two[0], player_histogram)
-            if d1 < d2:
-                team_one.append(players_bb[idx])
-            else:
-                team_two.append(players_bb[idx])
+            for idx, player_histogram in enumerate(players_bb):
+                d1 = self.histogram_distance(team_one[0], player_histogram)
+                d2 = self.histogram_distance(team_two[0], player_histogram)
+                if d1 < d2:
+                    team_one.append(players_bb[idx])
+                else:
+                    team_two.append(players_bb[idx])
 
-        team_one = [player['bb'] for player in team_one]
-        team_two = [player['bb'] for player in team_two]
+            team_one = [player['bb'] for player in team_one]
+            team_two = [player['bb'] for player in team_two]
+        except:
+            print('Team classifier failed')
+            team_one, team_two = [], []            
 
         return team_one, team_two

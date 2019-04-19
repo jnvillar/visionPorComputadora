@@ -29,13 +29,12 @@ class PlayerTracker:
             h = int(bounding_box[3]/2)
             
 
-            tracker = cv2.TrackerKCF_create()
-            tracker.read(KCF_PARAMS.getFirstTopLevelNode())
+            tracker = cv2.TrackerCSRT_create()
+            #tracker.read(CSRT_PARAMS.getFirstTopLevelNode())
             tracker.init(frame, (x-w, y-h, w*2, h*2))
             self.player_trackers.append(tracker)
 
     def update(self, frame):
-        heigth, width = frame.shape[:2]
         with ThreadPoolExecutor(max_workers=22) as executor:
             pipe_list = []
             #start_time = datetime.datetime.now()
@@ -57,7 +56,7 @@ class PlayerTracker:
             if success:
                 (x, y, w, h) = [int(v) for v in box]
                 ## Saco a los jugadores que estan muy cerca del borde
-                if width-x < BOUNDING_BOX_END_LIMIT or x < BOUNDING_BOX_END_LIMIT:
+                if not self.should_track_player(frame, (x, y, w, h)):
                     player_track_to_remove.append(i)
                     bounding_boxes.append(None)
                 else:
@@ -70,5 +69,9 @@ class PlayerTracker:
         self.player_trackers = [tracker for i, tracker in enumerate(self.player_trackers) if i not in player_track_to_remove]
         return bounding_boxes
 
+    def should_track_player(self, frame, bounding_box):
+        heigth, width = frame.shape[:2]
+        (x, y, w, h) = bounding_box
+        return not (width-x < BOUNDING_BOX_END_LIMIT or x < BOUNDING_BOX_END_LIMIT)
     
 

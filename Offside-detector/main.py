@@ -7,6 +7,7 @@ from drawer import Drawer
 from matplotlib import pyplot as plt
 from vanishing_point import get_offside_line, get_vanishing_point
 from player_tracker import PlayerTracker
+import math
 
 field_detector = FieldDetector()
 classifier = Classifier()
@@ -40,22 +41,22 @@ def get_leftmost_player(bounding_boxes, vanishing_point):
             leftmost_player = p
     return leftmost_player
 
-cap = cv2.VideoCapture('./videos/video.mp4')
-out = cv2.VideoWriter('./videos/output.mp4', 0x7634706d, 30.0, (1280, 720))
+INPUT_VIDEO_NAME = 'pity'
+cap = cv2.VideoCapture('./videos/{}.mp4'.format(INPUT_VIDEO_NAME))
+out = cv2.VideoWriter('./videos/output-{}.mp4'.format(INPUT_VIDEO_NAME), 0x7634706d, 30.0, (1280, 720))
 
 if not cap.isOpened():
     raise Exception('Video cound not be opened')
 
-start_frame = 0
-end_frame = 50
+start_frame = 200
+end_frame = 400
 player_trackers = []
 
 for frame_index in range(0, end_frame):
 
-    if frame_index < start_frame:
-        continue
-
     ret, frame = cap.read()
+    if frame_index < start_frame:    
+        continue
 
     if ret == False:
         break
@@ -64,8 +65,13 @@ for frame_index in range(0, end_frame):
 
     if frame_index == start_frame:
         first_vp = vp
+    else:
+        if math.sqrt((vp[0]-vp_copy[0])**2+(vp[1]-vp_copy[1])**2) > 100:
+            #vp = vp_copy
+            pass
+    vp_copy = vp
 
-    frame = field_detector.detect_field(frame, first_vp)
+    #frame = field_detector.detect_field(frame, first_vp)
 
     if frame_index % yolo_in_frames == 0:
         
@@ -73,21 +79,22 @@ for frame_index in range(0, end_frame):
         res = player_detector.detect_players(yolo_img)
         if debug: print("yolo: players detected")
         res = [r for r in res if r[1] > 0.6]
+        res = [r for r in res if r[2][3] < 200]
 
         player_tracker.load_players(frame, res)
+        classifier.restart()
         for i in range(len(res)):
             bb = res[i]
             bounding_box = bb[2]
 
-            classifier.classify(bounding_box, frame)
+            if player_tracker.should_track_player(frame, bounding_box):
+                classifier.classify(bounding_box, frame)
 
         t1, t2 = classifier.get_teams(referee=0)
 
         drawer.draw_team(frame, t1, (0, 0, 255))
         drawer.draw_team(frame, t2, (0, 255, 0))
 
-        if debug:
-            cv2.imshow('img', frame)
 
         out.write(frame)
         continue
