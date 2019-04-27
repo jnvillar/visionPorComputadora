@@ -8,6 +8,8 @@ from matplotlib import pyplot as plt
 from vanishing_point import get_offside_line, get_vanishing_point
 from player_tracker import PlayerTracker
 import math
+import click
+
 
 field_detector = FieldDetector()
 classifier = Classifier()
@@ -41,81 +43,95 @@ def get_leftmost_player(bounding_boxes, vanishing_point):
             leftmost_player = p
     return leftmost_player
 
-INPUT_VIDEO_NAME = 'pity'
-cap = cv2.VideoCapture('./videos/{}.mp4'.format(INPUT_VIDEO_NAME))
-out = cv2.VideoWriter('./videos/output-{}.mp4'.format(INPUT_VIDEO_NAME), 0x7634706d, 30.0, (1280, 720))
+@click.command()
+@click.option("--input_video", default='video', help="Name of video to process", show_default='video')
+@click.option("--start_frame", default=0, help="Start frame", show_default=0)
+@click.option("--end_frame", default=100, help="End frame", show_default=100)
+@click.option("--vp_validation", default=False, help="Validate vanishing point using the last vp calculated", show_default=False)
 
-if not cap.isOpened():
-    raise Exception('Video cound not be opened')
+def main(input_video, start_frame, end_frame, vp_validation):
+    cap = cv2.VideoCapture('./videos/{}.mp4'.format(input_video))
+    out = cv2.VideoWriter('./videos/output-{}.mp4'.format(input_video), 0x7634706d, 30.0, (1280, 720))
 
-start_frame = 200
-end_frame = 400
-player_trackers = []
+    if not cap.isOpened():
+        raise Exception('Video cound not be opened')
 
-for frame_index in range(0, end_frame):
+    player_trackers = []
 
-    ret, frame = cap.read()
-    if frame_index < start_frame:    
-        continue
+    for frame_index in range(0, end_frame):
 
-    if ret == False:
-        break
-    
-    vp = get_vanishing_point(frame)
+        ret, frame = cap.read()
+        if frame_index < start_frame:    
+            continue
 
-    if frame_index == start_frame:
-        first_vp = vp
-    else:
-        if math.sqrt((vp[0]-vp_copy[0])**2+(vp[1]-vp_copy[1])**2) > 100:
-            #vp = vp_copy
-            pass
-    vp_copy = vp
-
-    #frame = field_detector.detect_field(frame, first_vp)
-
-    if frame_index % yolo_in_frames == 0:
+        if ret == False:
+            break
         
-        yolo_img = player_detector.open_img(frame)
-        res = player_detector.detect_players(yolo_img)
-        if debug: print("yolo: players detected")
-        res = [r for r in res if r[1] > 0.6]
-        res = [r for r in res if r[2][3] < 200]
+        vp = get_vanishing_point(frame)
 
-        player_tracker.load_players(frame, res)
-        classifier.restart()
-        for i in range(len(res)):
-            bb = res[i]
-            bounding_box = bb[2]
+        if frame_index == start_frame:
+            first_vp = vp
+        else:
+            ## si el vp cambio mucho, entonces probablemente sea un outlier. Mejor usar el ultimo vp calculado. Esto asume que el primer vp es 'bueno'.
+            if math.sqrt((vp[0]-vp_copy[0])**2+(vp[1]-vp_copy[1])**2) > 100: 
+                if vp_validation: 
+                    vp = vp_copy
+        vp_copy = vp
 
-            if player_tracker.should_track_player(frame, bounding_box):
+        #frame = field_detector.detect_field(frame, first_vp)
+
+        if frame_index % yolo_in_frames == 0:
+            
+            yolo_img = player_detector.open_img(frame)
+            res = player_detector.detect_players(yolo_img)
+            if debug: print("yolo: players detected")
+            res = [r for r in res if r[0] == 'person']
+            res = [r for r in res if r[1] > 0.6]
+            res = [r for r in res if r[2][3] < 200] ## si tiene mas de 200 de ancho, entonces no es un jugador.
+            res = [r for r in res if player_tracker.should_track_player(frame, r[2])] ## si esta muy cerca del borde, no lo tomamos en cuenta
+
+            player_tracker.load_players(frame, res)
+            classifier.restart()
+            for i in range(len(res)):
+                bb = res[i]
+                bounding_box = bb[2]
                 classifier.classify(bounding_box, frame)
 
-        t1, t2 = classifier.get_teams(referee=0)
+            teams = classifier.get_teams(referee=0)
+            t1 = []
+            t2 = []
 
-        drawer.draw_team(frame, t1, (0, 0, 255))
-        drawer.draw_team(frame, t2, (0, 255, 0))
+            for i in range(len(res)):
+                if teams[i] is not None:
+                    drawer.draw_player(frame, res[i][2], teams[i])
 
+
+            out.write(frame)
+            continue
+
+        bounding_boxes = player_tracker.update(frame)
+        for idx, bb in enumerate(bounding_boxes):
+            if bb is not None and teams[idx] is not None:
+                x,y,w,h = bb
+                drawer.draw_player(frame, (int(x+w/2), int(y+h/2),w, h), teams[idx])
+
+
+        leftmost_player = get_leftmost_player(bounding_boxes, vp)
+
+        offside_line = get_offside_line(vp, leftmost_player)
+        if offside_line is not None:
+            #cv2.line(frame, offside_line[0],offside_line[1],(255,255,0),2) ## TODO: usar esto cuando ande bien
+            cv2.line(frame, vp,leftmost_player,(255,255,0),2)
 
         out.write(frame)
+        if debug: print('frame: ' + str(frame_index) + ' processed')
         continue
 
-    bounding_boxes = player_tracker.update(frame)
-    for bb in bounding_boxes:
-        if bb is not None:
-            x,y,w,h = bb
-            cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+    cap.release()
+    out.release()
+    cv2.destroyAllWindows()
 
 
-    leftmost_player = get_leftmost_player(bounding_boxes, vp)
-    ## TODO: use this
-    offside_line = get_offside_line(vp, leftmost_player)
-    if offside_line is not None:
-        cv2.line(frame, vp,leftmost_player,(255,255,0),2)
 
-    out.write(frame)
-    if debug: print('frame: ' + str(frame_index) + ' processed')
-    continue
-
-cap.release()
-out.release()
-cv2.destroyAllWindows()
+if __name__ == "__main__":
+    main()

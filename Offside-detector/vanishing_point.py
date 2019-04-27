@@ -30,7 +30,6 @@ def get_vanishing_point(frame):
 
 	sobelx = cv2.Sobel(blur_gray,cv2.CV_8U,1,0,ksize=-1)
 
-	############ calculate vanishing point
 	lines = cv2.HoughLines(sobelx,1,np.pi/180,200)
 
 	parallel_lines = []
@@ -76,9 +75,13 @@ def get_vanishing_point(frame):
 
 
 def get_offside_line(vanishing_point, leftmost_player_position):
-	if leftmost_player_position is None:
-		return None
-	offside_line = _get_full_line(vanishing_point, leftmost_player_position)
+	offside_line = None
+	try:
+		if leftmost_player_position is None:
+			return None
+		offside_line = _get_full_line(vanishing_point, leftmost_player_position)
+	except Exception as e:
+		print('Get offside line failed', e)
 	return offside_line
 
 

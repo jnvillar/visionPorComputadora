@@ -15,6 +15,17 @@ class Classifier:
         player_histogram = self.calculate_histogram(frame, bounding_box)
         self.player_histograms.append(player_histogram)
 
+    def _is_grass(self, pixel):
+        rgbColor = np.uint8([[[0,255,0]]])
+        hsvColor = cv2.cvtColor(rgbColor, cv2.COLOR_BGR2HSV)
+        sensitivity = 20;
+        COLOR_MIN = np.array([hsvColor[0][0][0] - sensitivity, 100, 70])
+        COLOR_MAX = np.array([hsvColor[0][0][0] + sensitivity, 255, 255])
+
+        
+        pixel = cv2.cvtColor(np.uint8([[[pixel[0],pixel[1],pixel[2]]]]), cv2.COLOR_BGR2HSV)
+        return COLOR_MIN[0] <= pixel[0][0][0] <= COLOR_MAX[0]
+
     def calculate_mask(self, frame, bounding_box):
         mask = np.zeros(frame.shape[:2], np.uint8)
 
@@ -27,20 +38,21 @@ class Classifier:
         initial_y = int(y - (h / 2))
 
         mask[initial_y: initial_y + h, initial_x: initial_x + w] = 255
+        for j in range(initial_y, initial_y + h):
+            for i in range(initial_x, initial_x + w):
+                if self._is_grass(frame[j,i]):
+                    mask[j,i] = 0
         return mask
 
     def calculate_histogram(self, frame, bounding_box):
         mask = self.calculate_mask(frame, bounding_box)
-        h1 = cv2.calcHist([frame], [0], mask, [self.buckets_per_color], [0, 256])
-        h2 = cv2.calcHist([frame], [1], mask, [self.buckets_per_color], [0, 256])
-        h3 = cv2.calcHist([frame], [2], mask, [self.buckets_per_color], [0, 256])
-        return {'b': h1, 'g': h2, 'r': h3, 'bb': bounding_box}
+        hsv_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+        h1 = cv2.calcHist([hsv_frame], [1], mask, [255], [0, 255])
+        
+        return {'h': h1, 'bb': bounding_box}
 
     def histogram_distance(self, h1, h2):
-        diff = 0
-        diff += cv2.compareHist(h1['r'], h2['r'], method=cv2.HISTCMP_INTERSECT)
-        diff += cv2.compareHist(h1['g'], h2['g'], method=cv2.HISTCMP_INTERSECT)
-        diff += cv2.compareHist(h1['b'], h2['b'], method=cv2.HISTCMP_INTERSECT)
+        diff = cv2.compareHist(h1['h'], h2['h'], method=cv2.HISTCMP_CHISQR)
         return diff
 
     def max_histogram_diff(self, histogram, players_histograms):
@@ -106,7 +118,7 @@ class Classifier:
 
     def get_teams(self, referee = 0):
         try:
-            players_bb = self.player_histograms
+            players_bb = list(self.player_histograms)
             distances = self.calculate_distances(players_bb)
 
             players_bb = self.delete_referees(referee, distances, players_bb)
@@ -114,8 +126,12 @@ class Classifier:
 
             player_one_i, player_two_j = self.max_difference(distances)
 
-            team_one = [players_bb[player_one_i]]
-            team_two = [players_bb[player_two_j]]
+            if np.argmax(players_bb[player_one_i]['h']) < np.argmax(players_bb[player_two_j]['h']):     ## para intentar ser consistentes y elegir siempre los mismos colores para cada equipo
+                team_one = [players_bb[player_one_i]]
+                team_two = [players_bb[player_two_j]]
+            else:
+                team_two = [players_bb[player_one_i]]
+                team_one = [players_bb[player_two_j]]
 
             players_bb.pop(player_one_i)
             players_bb.pop(player_two_j-1)
@@ -130,8 +146,8 @@ class Classifier:
 
             team_one = [player['bb'] for player in team_one]
             team_two = [player['bb'] for player in team_two]
-        except:
-            print('Team classifier failed')
+        except Exception as e:
+            print('Team classifier failed', e)
             team_one, team_two = [], []            
 
-        return team_one, team_two
+        return [0 if player['bb'] in team_one else 1 if player['bb'] in team_two else None for player in self.player_histograms]
