@@ -1,6 +1,5 @@
 import cv2
 from multiprocessing import Pipe
-from threading import Thread
 from concurrent.futures.thread import ThreadPoolExecutor
 
 BOUNDING_BOX_END_LIMIT = 100
@@ -73,5 +72,36 @@ class PlayerTracker:
         heigth, width = frame.shape[:2]
         (x, y, w, h) = bounding_box
         return not (width-x < BOUNDING_BOX_END_LIMIT or x < BOUNDING_BOX_END_LIMIT)
+
+    def get_leftmost_player(self, bounding_boxes, vanishing_point):
+        leftmost_player = None
+        for i in range(len(bounding_boxes)):
+            if bounding_boxes[i] is None:
+                continue
+            (x, y, w, h) = bounding_boxes[i]
+            # Asumo que atacan para la izquierda
+            p = (x, y + h)
+            if leftmost_player is None:
+                leftmost_player = p
+            direction = (p[0] - vanishing_point[0]) * (leftmost_player[1] - vanishing_point[1]) - (
+                    p[1] - vanishing_point[1]) * (leftmost_player[0] - vanishing_point[0])
+            if direction < 0:
+                leftmost_player = p
+        return leftmost_player
+
+    def detect_with_yolo(self, frame):
+        yolo_img = self.open_img(frame)
+        res = self.detect_players(yolo_img)
+
+        if self.debug: print("yolo: players detected")
+
+        res = [r for r in res if r[0] == 'person']
+        res = [r for r in res if r[1] > 0.6]
+        res = [r for r in res if r[2][3] < 200]  ## si tiene mas de 200 de ancho, entonces no es un jugador.
+        res = [r for r in res if self.should_track_player(frame, r[
+            2])]  ## si esta muy cerca del borde, no lo tomamos en cuenta
+
+        self.load_players(frame, res)
+        return res
     
 

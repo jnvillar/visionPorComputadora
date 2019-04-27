@@ -11,6 +11,12 @@ class Classifier:
     def restart(self):
         self.player_histograms = []
 
+    def process(self, players_bb, frame):
+        for i in range(len(players_bb)):
+            bb = players_bb[i]
+            bounding_box = bb[2]
+            self.classify(bounding_box, frame)
+
     def classify(self, bounding_box, frame):
         player_histogram = self.calculate_histogram(frame, bounding_box)
         self.player_histograms.append(player_histogram)

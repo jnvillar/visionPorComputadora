@@ -1,5 +1,6 @@
 import cv2
 
+
 class Drawer:
 
     def draw_team(self, frame, team_bounding_boxes, color):
@@ -16,4 +17,9 @@ class Drawer:
         y = int(bounding_box[1])
         w = int(bounding_box[2] / 2)
         h = int(bounding_box[3] / 2)
-        cv2.rectangle(frame, (x - w, y - h), (x + w, y + h), color, 2)        
+        cv2.rectangle(frame, (x - w, y - h), (x + w, y + h), color, 2)
+
+    def draw_all_players(self, players_bbs, teams, frame):
+        for i in range(len(players_bbs)):
+            if teams[i] is not None:
+                self.draw_player(frame, players_bbs[i][2], teams[i])
