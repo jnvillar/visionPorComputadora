@@ -1,5 +1,7 @@
 import cv2
 import numpy as np
+from matplotlib import pyplot as plt
+from constants import Constants
 
 
 class Classifier:
@@ -7,6 +9,8 @@ class Classifier:
     def __init__(self):
         self.player_histograms = []
         self.buckets_per_color = 200
+        self.teams_set = False
+        self.attacking_idx = 0
 
     def restart(self):
         self.player_histograms = []
@@ -122,10 +126,33 @@ class Classifier:
             players_bb.pop(i)
         return players_bb
 
+    def check_points(self, points):
+        if len(points) < 1:
+            print("No points detected")
+            exit()
 
-    def get_teams(self, referee = 0):
+    def get_attacking_player_index(self, frame):
+        self.teams_setted = True
+        plt.imshow(frame)
+        points = plt.ginput(100, show_clicks=True)
+        self.check_points(points)
+        click = points[-1]
+        for idx, player_bb in enumerate(self.player_histograms):
+            x = int(player_bb['bb'][0])
+            y = int(player_bb['bb'][1])
+            w = int(player_bb['bb'][2] / 2)
+            h = int(player_bb['bb'][3] / 2)
+            if click[0] > (x - w) and click[0] < (x + w) and click[1] < (y + h) and click[1] > (y - h):
+                self.attacking_idx = idx
+                return idx
+
+
+    def get_teams(self, frame, referee = 0):
         try:
             players_bb = list(self.player_histograms)
+            if not self.teams_set:
+                self.get_attacking_player_index(frame)
+
             distances = self.calculate_distances(players_bb)
 
             players_bb = self.delete_referees(referee, distances, players_bb)
@@ -134,27 +161,33 @@ class Classifier:
             player_one_i, player_two_j = self.max_difference(distances)
 
             if np.argmax(players_bb[player_one_i]['h']) < np.argmax(players_bb[player_two_j]['h']):     ## para intentar ser consistentes y elegir siempre los mismos colores para cada equipo
-                team_one = [players_bb[player_one_i]]
-                team_two = [players_bb[player_two_j]]
+                attacking_team = [players_bb[player_one_i]]
+                defending_team = [players_bb[player_two_j]]
             else:
-                team_two = [players_bb[player_one_i]]
-                team_one = [players_bb[player_two_j]]
+                defending_team = [players_bb[player_one_i]]
+                attacking_team = [players_bb[player_two_j]]
 
             players_bb.pop(player_one_i)
             players_bb.pop(player_two_j-1)
 
             for idx, player_histogram in enumerate(players_bb):
-                d1 = self.histogram_distance(team_one[0], player_histogram)
-                d2 = self.histogram_distance(team_two[0], player_histogram)
+                d1 = self.histogram_distance(attacking_team[0], player_histogram)
+                d2 = self.histogram_distance(defending_team[0], player_histogram)
                 if d1 < d2:
-                    team_one.append(players_bb[idx])
+                    attacking_team.append(players_bb[idx])
                 else:
-                    team_two.append(players_bb[idx])
+                    defending_team.append(players_bb[idx])
 
-            team_one = [player['bb'] for player in team_one]
-            team_two = [player['bb'] for player in team_two]
+            attacking_team = [player['bb'] for player in attacking_team]
+            defending_team = [player['bb'] for player in defending_team]
         except Exception as e:
             print('Team classifier failed', e)
-            team_one, team_two = [], []            
+            attacking_team, defending_team = [], []
 
-        return [0 if player['bb'] in team_one else 1 if player['bb'] in team_two else None for player in self.player_histograms]
+        if self.player_histograms[self.attacking_idx]['bb'] in defending_team:
+            copy = list(attacking_team)
+            attacking_team = defending_team
+            defending_team = copy
+
+
+        return [Constants.red_team if player['bb'] in attacking_team else Constants.green_team if player['bb'] in defending_team else None for player in self.player_histograms]

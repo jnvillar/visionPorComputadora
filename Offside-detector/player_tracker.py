@@ -79,9 +79,11 @@ class PlayerTracker:
 
         self.load_players(frame, res)
 
-    def get_leftmost_player(self, bounding_boxes, vanishing_point):
+    def get_leftmost_player(self, bounding_boxes, vanishing_point, team, teams):
         leftmost_player = None
         for i in range(len(bounding_boxes)):
+            if teams[i] != team:
+                continue
             if bounding_boxes[i] is None:
                 continue
             (x, y, w, h) = bounding_boxes[i]
@@ -91,7 +93,7 @@ class PlayerTracker:
                 leftmost_player = p
             direction = (p[0] - vanishing_point[0]) * (leftmost_player[1] - vanishing_point[1]) - (
                     p[1] - vanishing_point[1]) * (leftmost_player[0] - vanishing_point[0])
-            if direction < 0:
+            if direction < 0 :
                 leftmost_player = p
         return leftmost_player
     
