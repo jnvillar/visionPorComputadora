@@ -12,6 +12,7 @@ class Classifier:
         self.player_histograms = []
 
     def process(self, players_bb, frame):
+        self.restart()
         for i in range(len(players_bb)):
             bb = players_bb[i]
             bounding_box = bb[2]

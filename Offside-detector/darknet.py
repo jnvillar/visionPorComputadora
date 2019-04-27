@@ -155,10 +155,11 @@ def detect(net, meta, im, thresh=.5, hier_thresh=.5, nms=.45):
 
 class PlayerDetector(object):
     """docstring for PlayerDetector"""
-    def __init__(self):
+    def __init__(self, debug = True):
         super(PlayerDetector, self).__init__()
         self.net = load_net("./darknet/cfg/yolov3.cfg", "./darknet/yolov3.weights", 0)
         self.meta = load_meta("./darknet/cfg/coco.data")
+        self.debug = debug
 
     def detect_players(self, img):
         return detect(self.net, self.meta, img)
@@ -172,6 +173,17 @@ class PlayerDetector(object):
         data = c_array(c_float, arr)
         im = IMAGE(w,h,c,data)
         return im
+
+    def detect_with_yolo(self, frame):
+        yolo_img = self.open_img(frame)
+        res = self.detect_players(yolo_img)
+
+        if self.debug: print("yolo: players detected")
+
+        res = [r for r in res if r[0] == 'person']
+        res = [r for r in res if r[1] > 0.6]
+        res = [r for r in res if r[2][3] < 200]  ## si tiene mas de 200 de ancho, entonces no es un jugador.
+        return res
 
 
 if __name__ == "__main__":

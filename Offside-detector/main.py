@@ -54,8 +54,8 @@ def main(input_video, start_frame, end_frame, vp_validation, debug):
         # frame = field_detector.detect_field(frame, first_vp)
 
         if frame_index % YOLO_FRAME_PERIOD == 0:
-            players_bbs = player_tracker.detect_with_yolo(frame)
-            classifier.restart()
+            players_bbs = player_detector.detect_with_yolo(frame)
+            player_tracker.track_players(players_bbs, frame)
             classifier.process(players_bbs, frame)
             teams = classifier.get_teams(referee=0)
             drawer.draw_all_players(players_bbs, teams, frame)
@@ -63,18 +63,10 @@ def main(input_video, start_frame, end_frame, vp_validation, debug):
             continue
 
         bounding_boxes = player_tracker.update(frame)
-        for idx, bb in enumerate(bounding_boxes):
-            if bb is not None and teams[idx] is not None:
-                x, y, w, h = bb
-                drawer.draw_player(frame, (int(x + w / 2), int(y + h / 2), w, h), teams[idx])
-
+        drawer.update_players(frame, bounding_boxes, teams)
         leftmost_player = player_tracker.get_leftmost_player(bounding_boxes, vp)
-
         offside_line = get_offside_line(vp, leftmost_player)
-        if offside_line is not None:
-            # cv2.line(frame, offside_line[0],offside_line[1],(255,255,0),2) ## TODO: usar esto cuando ande bien
-            cv2.line(frame, vp, leftmost_player, (255, 255, 0), 2)
-
+        drawer.draw_offside_line(frame, vp, offside_line, leftmost_player)
         out.write(frame)
         if debug: print('frame: ' + str(frame_index) + ' processed')
         continue
