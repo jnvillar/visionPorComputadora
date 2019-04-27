@@ -11,14 +11,7 @@ import math
 import click
 
 
-field_detector = FieldDetector()
-classifier = Classifier()
-drawer = Drawer()
-player_detector = PlayerDetector()
-player_tracker = PlayerTracker()
-debug = True
-yolo_in_frames = 20
-
+YOLO_FRAME_PERIOD = 20
 
 def intersection(line1, line2):
     p1, p2, p3, p4 = line1['p1'], line1['p2'], line2['p1'], line2['p2']
@@ -44,12 +37,19 @@ def get_leftmost_player(bounding_boxes, vanishing_point):
     return leftmost_player
 
 @click.command()
-@click.option("--input_video", default='video', help="Name of video to process", show_default='video')
-@click.option("--start_frame", default=0, help="Start frame", show_default=0)
-@click.option("--end_frame", default=100, help="End frame", show_default=100)
-@click.option("--vp_validation", default=False, help="Validate vanishing point using the last vp calculated", show_default=False)
+@click.option("--input_video", default='video', help="Name of video to process", show_default=True)
+@click.option("--start_frame", default=0, help="Start frame", show_default=True)
+@click.option("--end_frame", default=100, help="End frame", show_default=True)
+@click.option("--vp_validation", default=False, help="Validate vanishing point using the last vp calculated", show_default=True)
+@click.option("--debug", default=True, help="Should display debug info", show_default=True)
 
-def main(input_video, start_frame, end_frame, vp_validation):
+def main(input_video, start_frame, end_frame, vp_validation, debug):
+    field_detector = FieldDetector()
+    classifier = Classifier()
+    drawer = Drawer()
+    player_detector = PlayerDetector()
+    player_tracker = PlayerTracker()
+
     cap = cv2.VideoCapture('./videos/{}.mp4'.format(input_video))
     out = cv2.VideoWriter('./videos/output-{}.mp4'.format(input_video), 0x7634706d, 30.0, (1280, 720))
 
@@ -80,7 +80,7 @@ def main(input_video, start_frame, end_frame, vp_validation):
 
         #frame = field_detector.detect_field(frame, first_vp)
 
-        if frame_index % yolo_in_frames == 0:
+        if frame_index % YOLO_FRAME_PERIOD == 0:
             
             yolo_img = player_detector.open_img(frame)
             res = player_detector.detect_players(yolo_img)
