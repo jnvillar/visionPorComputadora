@@ -3,4 +3,4 @@
 *.pyc
 *output.mp4
 *.weights
-*.mp4
+*Offside-detector/videos/output-video.mp4

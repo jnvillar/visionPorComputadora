@@ -1,30 +1,34 @@
 import cv2
-import numpy as np
 from field_detector import FieldDetector
 from darknet import PlayerDetector
 from classifier import Classifier
 from drawer import Drawer
 from vanishing_point import get_offside_line, get_vanishing_point
 from player_tracker import PlayerTracker
+from constants import Constants
+from store import Storer
 import math
 import click
 
-YOLO_FRAME_PERIOD = 20
+
+
+
 
 @click.command()
 @click.option("--input_video", default='video', help="Name of video to process", show_default=True)
-@click.option("--start_frame", default=0, help="Start frame", show_default=True)
-@click.option("--end_frame", default=10, help="End frame", show_default=True)
-@click.option("--vp_validation", default=False, help="Validate vanishing point using the last vp calculated",
-              show_default=True)
+@click.option("--start_frame", default=101, help="Start frame", show_default=True)
+@click.option("--end_frame", default=111, help="End frame", show_default=True)
+@click.option("--vp_validation", default=False, help="Validate vanishing point using the last vp calculated", show_default=True)
 @click.option("--debug", default=True, help="Should display debug info", show_default=True)
 def main(input_video, start_frame, end_frame, vp_validation, debug):
+    storer = Storer()
+    storer.use_last_yolo_result(input_video, start_frame)
+
     field_detector = FieldDetector()
     classifier = Classifier()
     drawer = Drawer()
     player_detector = PlayerDetector()
     player_tracker = PlayerTracker()
-
     cap = cv2.VideoCapture('./videos/{}.mp4'.format(input_video))
     out = cv2.VideoWriter('./videos/output-{}.mp4'.format(input_video), 0x7634706d, 30.0, (1280, 720))
 
@@ -53,22 +57,22 @@ def main(input_video, start_frame, end_frame, vp_validation, debug):
 
         # frame = field_detector.detect_field(frame, first_vp)
 
-        if frame_index % YOLO_FRAME_PERIOD == 0:
-            players_bbs = player_detector.detect_with_yolo(frame)
+        if (frame_index % Constants.yolo_frame_period == 0) or frame_index == start_frame:
+            players_bbs = player_detector.detect_with_yolo(frame, frame_index == start_frame)
             player_tracker.track_players(players_bbs, frame)
             classifier.process(players_bbs, frame)
-            teams = classifier.get_teams(referee=0)
+            teams = classifier.get_teams(frame, referee=1)
             drawer.draw_all_players(players_bbs, teams, frame)
             out.write(frame)
             continue
 
         bounding_boxes = player_tracker.update(frame)
         drawer.update_players(frame, bounding_boxes, teams)
-        leftmost_player = player_tracker.get_leftmost_player(bounding_boxes, vp)
+        leftmost_player = player_tracker.get_leftmost_player(bounding_boxes, vp, Constants.green_team, teams)
         offside_line = get_offside_line(vp, leftmost_player)
         drawer.draw_offside_line(frame, vp, offside_line, leftmost_player)
         out.write(frame)
-        if debug: print('frame: ' + str(frame_index) + ' processed')
+        if Constants.debug_main: print('frame: ' + str(frame_index) + ' processed')
         continue
 
     cap.release()
