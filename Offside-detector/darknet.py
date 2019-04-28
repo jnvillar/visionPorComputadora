@@ -191,7 +191,7 @@ class PlayerDetector(object):
         yolo_img = self.open_img(frame)
         res = self.detect_players(yolo_img)
 
-        if self.debug: print("yolo: players detected")
+        if Constants.yolo_debug: print("players detected using yolo")
 
         res = [r for r in res if r[0] == 'person']
         res = [r for r in res if r[1] > 0.6]

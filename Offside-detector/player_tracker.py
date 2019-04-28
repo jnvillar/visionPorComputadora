@@ -42,12 +42,8 @@ class PlayerTracker:
                 recv_end, send_end = Pipe(False)
                 executor.submit(self._update_bounding_box, frame, tracker, send_end)
                 pipe_list.append(recv_end)
-        
 
-        
         updated_boxes = [x.recv() for x in pipe_list]
-        
-        
         player_track_to_remove = []
         bounding_boxes = []
         for i in range(len(updated_boxes)):

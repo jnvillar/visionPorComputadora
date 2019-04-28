@@ -97,7 +97,7 @@ for frame_index in range(0, 1):
 			#cv2.rectangle(frame_copy, (x-w, y-h), (x + w, y + h), (0, 0, 255), 2)
 			classifier.classify(bounding_box, frame_copy)
 
-		t1, t2 = classifier.get_teams(referee=0)
+		t1, t2 = classifier.calculate_teams(outliers=0)
 		drawer.draw_team(frame_copy, t1, (0, 0, 255))
 		drawer.draw_team(frame_copy, t2, (0, 255, 0))
 

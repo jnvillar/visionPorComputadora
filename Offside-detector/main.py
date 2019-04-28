@@ -11,19 +11,16 @@ import math
 import click
 
 
-
-
-
 @click.command()
 @click.option("--input_video", default='video', help="Name of video to process", show_default=True)
-@click.option("--start_frame", default=101, help="Start frame", show_default=True)
-@click.option("--end_frame", default=111, help="End frame", show_default=True)
+@click.option("--start_frame", default=0, help="Start frame", show_default=True)
+@click.option("--end_frame", default=90, help="End frame", show_default=True)
 @click.option("--vp_validation", default=False, help="Validate vanishing point using the last vp calculated", show_default=True)
 @click.option("--debug", default=True, help="Should display debug info", show_default=True)
 def main(input_video, start_frame, end_frame, vp_validation, debug):
+    Constants.debug_main = debug
     storer = Storer()
     storer.use_last_yolo_result(input_video, start_frame)
-
     field_detector = FieldDetector()
     classifier = Classifier()
     drawer = Drawer()
@@ -34,6 +31,8 @@ def main(input_video, start_frame, end_frame, vp_validation, debug):
 
     if not cap.isOpened():
         raise Exception('Video cound not be opened')
+
+    bounding_boxes = []
 
     for frame_index in range(0, end_frame):
 
@@ -57,18 +56,20 @@ def main(input_video, start_frame, end_frame, vp_validation, debug):
 
         # frame = field_detector.detect_field(frame, first_vp)
 
+        frame = field_detector.detect_field(frame, vp)
+
         if (frame_index % Constants.yolo_frame_period == 0) or frame_index == start_frame:
             players_bbs = player_detector.detect_with_yolo(frame, frame_index == start_frame)
             player_tracker.track_players(players_bbs, frame)
-            classifier.process(players_bbs, frame)
-            teams = classifier.get_teams(frame, referee=1)
+            classifier.generate_histograms(players_bbs, frame)
+            teams = classifier.calculate_teams(frame, bounding_boxes, outliers=1)
             drawer.draw_all_players(players_bbs, teams, frame)
             out.write(frame)
             continue
 
         bounding_boxes = player_tracker.update(frame)
         drawer.update_players(frame, bounding_boxes, teams)
-        leftmost_player = player_tracker.get_leftmost_player(bounding_boxes, vp, Constants.green_team, teams)
+        leftmost_player = player_tracker.get_leftmost_player(bounding_boxes, vp, Constants.defending_team, teams)
         offside_line = get_offside_line(vp, leftmost_player)
         drawer.draw_offside_line(frame, vp, offside_line, leftmost_player)
         out.write(frame)

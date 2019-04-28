@@ -11,30 +11,26 @@ class Classifier:
         self.buckets_per_color = 200
         self.teams_set = False
         self.attacking_idx = 0
+        self.teams = []
 
     def restart(self):
         self.player_histograms = []
 
-    def process(self, players_bb, frame):
+    def generate_histograms(self, players_bb, frame):
         self.restart()
         for i in range(len(players_bb)):
             bb = players_bb[i]
             bounding_box = bb[2]
-            self.classify(bounding_box, frame)
-
-    def classify(self, bounding_box, frame):
-        player_histogram = self.calculate_histogram(frame, bounding_box)
-        self.player_histograms.append(player_histogram)
+            player_histogram = self.calculate_histogram(frame, bounding_box)
+            self.player_histograms.append(player_histogram)
 
     def _is_grass(self, pixel):
-        rgbColor = np.uint8([[[0,255,0]]])
+        rgbColor = np.uint8([[[0, 255, 0]]])
         hsvColor = cv2.cvtColor(rgbColor, cv2.COLOR_BGR2HSV)
-        sensitivity = 20;
+        sensitivity = 20
         COLOR_MIN = np.array([hsvColor[0][0][0] - sensitivity, 100, 70])
         COLOR_MAX = np.array([hsvColor[0][0][0] + sensitivity, 255, 255])
-
-        
-        pixel = cv2.cvtColor(np.uint8([[[pixel[0],pixel[1],pixel[2]]]]), cv2.COLOR_BGR2HSV)
+        pixel = cv2.cvtColor(np.uint8([[[pixel[0], pixel[1], pixel[2]]]]), cv2.COLOR_BGR2HSV)
         return COLOR_MIN[0] <= pixel[0][0][0] <= COLOR_MAX[0]
 
     def calculate_mask(self, frame, bounding_box):
@@ -51,15 +47,15 @@ class Classifier:
         mask[initial_y: initial_y + h, initial_x: initial_x + w] = 255
         for j in range(initial_y, initial_y + h):
             for i in range(initial_x, initial_x + w):
-                if self._is_grass(frame[j,i]):
-                    mask[j,i] = 0
+                if self._is_grass(frame[j, i]):
+                    mask[j, i] = 0
         return mask
 
     def calculate_histogram(self, frame, bounding_box):
         mask = self.calculate_mask(frame, bounding_box)
         hsv_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
         h1 = cv2.calcHist([hsv_frame], [1], mask, [255], [0, 255])
-        
+
         return {'h': h1, 'bb': bounding_box}
 
     def histogram_distance(self, h1, h2):
@@ -118,7 +114,7 @@ class Classifier:
                 i = p
         return i
 
-    def delete_referees(self, referees, distances, players_bb):
+    def delete_outliers(self, referees, distances, players_bb):
         for _ in range(referees):
             i = self.max_distance_with_others(distances)
             for p in range(len(distances)):
@@ -132,9 +128,13 @@ class Classifier:
             exit()
 
     def get_attacking_player_index(self, frame):
-        self.teams_setted = True
+        self.teams_set = True
         plt.imshow(frame)
-        points = plt.ginput(100, show_clicks=True)
+        points = plt.ginput(100, show_clicks=True, timeout=8)
+
+        for i in plt.get_fignums():
+            plt.close(i)
+
         self.check_points(points)
         click = points[-1]
         for idx, player_bb in enumerate(self.player_histograms):
@@ -146,8 +146,32 @@ class Classifier:
                 self.attacking_idx = idx
                 return idx
 
+    def find_previous_team(self, player_bb, previous_bbs):
+        min_distance = None
+        previous_team = None
 
-    def get_teams(self, frame, referee = 0):
+        for idx, bb in enumerate(previous_bbs):
+
+            if bb is None:
+                continue
+
+            x = abs(int(player_bb['bb'][0]) - int(bb[0]))
+            y = abs(int(player_bb['bb'][1]) - int(bb[1]))
+            w = abs(int(player_bb['bb'][2]) - int(bb[2]))
+            h = abs(int(player_bb['bb'][3]) - int(bb[3]))
+            distance = x + y + w + h
+
+            if (min_distance is None or distance < min_distance) and self.teams[idx] is not None :
+                min_distance = distance
+                previous_team = self.teams[idx]
+
+        if previous_team is None:
+            print("could not find player previous team, assuming attacking team")
+            exit()
+
+        return previous_team
+
+    def calculate_teams(self, frame, previous_bbs=[], outliers=0):
         try:
             players_bb = list(self.player_histograms)
             if not self.teams_set:
@@ -155,20 +179,30 @@ class Classifier:
 
             distances = self.calculate_distances(players_bb)
 
-            players_bb = self.delete_referees(referee, distances, players_bb)
+            players_bb = self.delete_outliers(outliers, distances, players_bb)
             distances = self.calculate_distances(players_bb)
 
             player_one_i, player_two_j = self.max_difference(distances)
 
-            if np.argmax(players_bb[player_one_i]['h']) < np.argmax(players_bb[player_two_j]['h']):     ## para intentar ser consistentes y elegir siempre los mismos colores para cada equipo
-                attacking_team = [players_bb[player_one_i]]
-                defending_team = [players_bb[player_two_j]]
+            if not self.teams:
+                ## para intentar ser consistentes y elegir siempre los mismos colores para cada equipo
+                if np.argmax(players_bb[player_one_i]['h']) < np.argmax(players_bb[player_two_j]['h']):
+                    attacking_team = [players_bb[player_one_i]]
+                    defending_team = [players_bb[player_two_j]]
+                else:
+                    defending_team = [players_bb[player_one_i]]
+                    attacking_team = [players_bb[player_two_j]]
             else:
-                defending_team = [players_bb[player_one_i]]
-                attacking_team = [players_bb[player_two_j]]
+                previous_team = self.find_previous_team(players_bb[player_one_i], previous_bbs)
+                if previous_team == Constants.attacking_team:
+                    attacking_team = [players_bb[player_one_i]]
+                    defending_team = [players_bb[player_two_j]]
+                else:
+                    defending_team = [players_bb[player_one_i]]
+                    attacking_team = [players_bb[player_two_j]]
 
             players_bb.pop(player_one_i)
-            players_bb.pop(player_two_j-1)
+            players_bb.pop(player_two_j - 1)
 
             for idx, player_histogram in enumerate(players_bb):
                 d1 = self.histogram_distance(attacking_team[0], player_histogram)
@@ -189,5 +223,5 @@ class Classifier:
             attacking_team = defending_team
             defending_team = copy
 
-
-        return [Constants.red_team if player['bb'] in attacking_team else Constants.green_team if player['bb'] in defending_team else None for player in self.player_histograms]
+        self.teams = [ Constants.attacking_team if player['bb'] in attacking_team else Constants.defending_team if player['bb'] in defending_team else None for player in self.player_histograms]
+        return self.teams
