@@ -18,7 +18,6 @@ import click
 @click.option("--vp_validation", default=False, help="Validate vanishing point using the last vp calculated", show_default=True)
 @click.option("--debug", default=True, help="Should display debug info", show_default=True)
 def main(input_video, start_frame, end_frame, vp_validation, debug):
-    Constants.debug_main = debug
     storer = Storer()
     storer.use_last_yolo_result(input_video, start_frame)
     field_detector = FieldDetector()
@@ -42,6 +41,7 @@ def main(input_video, start_frame, end_frame, vp_validation, debug):
 
         if ret == False:
             break
+        img_h, img_w = frame.shape[:2]
 
         vp = get_vanishing_point(frame)
 
@@ -58,7 +58,7 @@ def main(input_video, start_frame, end_frame, vp_validation, debug):
 
         frame = field_detector.detect_field(frame, vp)
 
-        if (frame_index % Constants.yolo_frame_period == 0) or frame_index == start_frame:
+        if (frame_index-start_frame) % Constants.yolo_frame_period == 0:
             players_bbs = player_detector.detect_with_yolo(frame, frame_index == start_frame)
             player_tracker.track_players(players_bbs, frame)
             classifier.generate_histograms(players_bbs, frame)
@@ -70,10 +70,12 @@ def main(input_video, start_frame, end_frame, vp_validation, debug):
         bounding_boxes = player_tracker.update(frame)
         drawer.update_players(frame, bounding_boxes, teams)
         leftmost_player = player_tracker.get_leftmost_player(bounding_boxes, vp, Constants.defending_team, teams)
-        offside_line = get_offside_line(vp, leftmost_player)
-        drawer.draw_offside_line(frame, vp, offside_line, leftmost_player)
+        
+        offside_line = get_offside_line(vp, leftmost_player, img_h, img_w)
+        drawer.draw_offside_line(frame, offside_line)
+
         out.write(frame)
-        if Constants.debug_main: print('frame: ' + str(frame_index) + ' processed')
+        if debug: print('frame: ' + str(frame_index) + ' processed')
         continue
 
     cap.release()
