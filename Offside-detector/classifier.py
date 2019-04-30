@@ -2,16 +2,20 @@ import cv2
 import numpy as np
 from matplotlib import pyplot as plt
 from constants import Constants
+from drawer import Drawer
+import statistics
 
 
 class Classifier:
 
-    def __init__(self):
+    def __init__(self, goalkeeper_tolerance):
         self.player_histograms = []
         self.buckets_per_color = 200
         self.teams_set = False
         self.attacking_idx = 0
         self.teams = []
+        self.drawer = Drawer()
+        self.goalkeeper_tolerance = goalkeeper_tolerance
 
     def restart(self):
         self.player_histograms = []
@@ -128,7 +132,6 @@ class Classifier:
             exit()
 
     def get_attacking_player_index(self, frame):
-        self.teams_set = True
         plt.imshow(frame)
         points = plt.ginput(100, show_clicks=True, timeout=8)
 
@@ -146,9 +149,9 @@ class Classifier:
                 self.attacking_idx = idx
                 return idx
 
-    def find_previous_team(self, player_bb, previous_bbs):
+    def closest_bb_to_player(self, player_bb, previous_bbs):
         min_distance = None
-        previous_team = None
+        team = None
 
         for idx, bb in enumerate(previous_bbs):
 
@@ -161,15 +164,70 @@ class Classifier:
             h = abs(int(player_bb['bb'][3]) - int(bb[3]))
             distance = x + y + w + h
 
-            if (min_distance is None or distance < min_distance) and self.teams[idx] is not None :
+            if (min_distance is None or distance < min_distance) and self.teams[idx] is not None:
                 min_distance = distance
-                previous_team = self.teams[idx]
+                team = self.teams[idx]
 
-        if previous_team is None:
-            print("could not find player previous team, assuming attacking team")
-            exit()
+        return min_distance, team
 
-        return previous_team
+    def closest_player_with_team(self, players_bb, previous_bbs):
+        min_distance = None
+        player = None
+        previous_team = None
+
+        for player_bb in players_bb:
+            distance, team = self.closest_bb_to_player(player_bb, previous_bbs)
+            if min_distance is None or distance < min_distance:
+                min_distance = distance
+                player = player_bb
+                previous_team = team
+
+        return player, previous_team
+
+    def distance_between_colors(self, one_color, another_color):
+        x = abs(one_color[0] - another_color[0])
+        y = abs(one_color[1] - another_color[1])
+        z = abs(one_color[2] - another_color[2])
+        return x + y + z
+
+    def add_distance_to_color(self, frame, player_bb, color):
+        distance_to_color = 0
+
+        x = int(player_bb['bb'][0])
+        y = int(player_bb['bb'][1])
+        w = int(player_bb['bb'][2])
+        h = int(player_bb['bb'][3])
+
+        initial_x = int(x - (w / 2))
+        initial_y = int(y - (h / 2))
+
+        for j in range(initial_y, initial_y + h):
+            for i in range(initial_x, initial_x + w):
+                distance_to_color += self.distance_between_colors(frame[j, i], color)
+
+        player_bb['distance_to_color'] = distance_to_color
+        return player_bb
+
+    def median_to_color(self, player_bbs):
+        distances_to_color = [player_bb['distance_to_color'] for player_bb in player_bbs]
+        return statistics.median(distances_to_color)
+
+    def delete_closest_to_color(self, frame, player_bbs, color, tolerance=True):
+        player_bbs_with_distances_to_color = []
+        for player_bb in player_bbs:
+            player_bbs_with_distances_to_color.append(self.add_distance_to_color(frame, player_bb, color))
+
+        player_bbs_with_distances_to_color.sort(key=lambda x: x['distance_to_color'])
+
+        if not tolerance:
+            return player_bbs_with_distances_to_color.pop(0)
+
+        median_to_color = self.median_to_color(player_bbs_with_distances_to_color)
+        if player_bbs_with_distances_to_color[0]['distance_to_color'] < (median_to_color * self.goalkeeper_tolerance):
+            if Constants.debug_classifier: print('classifier: deleted closest to color', color)
+            player_bbs_with_distances_to_color.pop(0)
+
+        return player_bbs_with_distances_to_color
 
     def calculate_teams(self, frame, previous_bbs=[], outliers=0):
         try:
@@ -177,29 +235,19 @@ class Classifier:
             if not self.teams_set:
                 self.get_attacking_player_index(frame)
 
-            distances = self.calculate_distances(players_bb)
+            # tries to delete referee , it may delete nothing
+            players_bb = self.delete_closest_to_color(frame, players_bb, Constants.yellow)
+            players_bb = self.delete_closest_to_color(frame, players_bb, Constants.black)
 
+            # delete one outlier to delete goalkeeper, it always deletes something
+            distances = self.calculate_distances(players_bb)
             players_bb = self.delete_outliers(outliers, distances, players_bb)
-            distances = self.calculate_distances(players_bb)
 
+            distances = self.calculate_distances(players_bb)
             player_one_i, player_two_j = self.max_difference(distances)
 
-            if not self.teams:
-                ## para intentar ser consistentes y elegir siempre los mismos colores para cada equipo
-                if np.argmax(players_bb[player_one_i]['h']) < np.argmax(players_bb[player_two_j]['h']):
-                    attacking_team = [players_bb[player_one_i]]
-                    defending_team = [players_bb[player_two_j]]
-                else:
-                    defending_team = [players_bb[player_one_i]]
-                    attacking_team = [players_bb[player_two_j]]
-            else:
-                previous_team = self.find_previous_team(players_bb[player_one_i], previous_bbs)
-                if previous_team == Constants.attacking_team:
-                    attacking_team = [players_bb[player_one_i]]
-                    defending_team = [players_bb[player_two_j]]
-                else:
-                    defending_team = [players_bb[player_one_i]]
-                    attacking_team = [players_bb[player_two_j]]
+            attacking_team = [players_bb[player_one_i]]
+            defending_team = [players_bb[player_two_j]]
 
             players_bb.pop(player_one_i)
             players_bb.pop(player_two_j - 1)
@@ -218,10 +266,26 @@ class Classifier:
             print('Team classifier failed', e)
             attacking_team, defending_team = [], []
 
-        if self.player_histograms[self.attacking_idx]['bb'] in defending_team:
-            copy = list(attacking_team)
-            attacking_team = defending_team
-            defending_team = copy
+        if not self.teams_set:
+            # if teams are not set, choose attacking team based on input click
+            if players_bb[self.attacking_idx]['bb'] in defending_team:
+                copy = list(attacking_team)
+                attacking_team = defending_team
+                defending_team = copy
+            self.teams_set = True
+        else:
+            # if teams were set previously, find closest bounding box and assign same team
+            player, previous_team = self.closest_player_with_team(self.player_histograms, previous_bbs)
+            if Constants.debug_classifier: self.drawer.bigger_bb(frame, player['bb'], previous_team)
+            if (player['bb'] in attacking_team and previous_team is Constants.defending_team) or (
+                    player['bb'] in defending_team and previous_team is Constants.attacking_team):
+                if Constants.debug_classifier: print('cambio equipos')
+                copy = list(attacking_team)
+                attacking_team = defending_team
+                defending_team = copy
 
-        self.teams = [ Constants.attacking_team if player['bb'] in attacking_team else Constants.defending_team if player['bb'] in defending_team else None for player in self.player_histograms]
+        self.teams = [
+            Constants.attacking_team if player['bb'] in attacking_team else
+            Constants.defending_team if player['bb'] in defending_team else
+            None for player in self.player_histograms]
         return self.teams
