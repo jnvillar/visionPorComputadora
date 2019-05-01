@@ -39,10 +39,10 @@ class Drawer:
                 x, y, w, h = bb
                 self.draw_player(frame, (int(x + w / 2), int(y + h / 2), w, h), teams[idx])
 
-    def draw_offside_line(self, frame, vp, offside_line, leftmost_player):
-        if offside_line is not None:
-            # cv2.line(frame, offside_line[0],offside_line[1],(255,255,0),2) ## TODO: usar esto cuando ande bien
-            cv2.line(frame, vp, leftmost_player, (255, 255, 0), 2)
+    def draw_offside_line(self, frame, offside_line):
+        if offside_line:
+            cv2.line(frame, offside_line[0],offside_line[1],(255,255,0),2)
+            
 
     def draw_all_players(self, players_bbs, teams, frame):
         self.frame += 1
