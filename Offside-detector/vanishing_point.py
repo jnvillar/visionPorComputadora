@@ -61,6 +61,10 @@ def get_vanishing_point(frame):
                     ## lines are parallel
                     parallel_lines.pop()
 
+    if len(parallel_lines) != 2:
+        print('Could not found two parallel lines')
+        return None
+
     x1, y1 = parallel_lines[0]['p1']
     x2, y2 = parallel_lines[0]['p2']
     # cv2.line(frame,(x1,y1),(x2,y2),(0,0,255),2)
@@ -76,7 +80,7 @@ def get_vanishing_point(frame):
 def get_offside_line(vanishing_point, leftmost_player_position, img_h, img_w):
     offside_line = []
     try:
-        if leftmost_player_position is None:
+        if leftmost_player_position is None or vanishing_point is None:
             return None
 
         if vanishing_point[0] == leftmost_player_position[0]:    ## si la linea de offside es completamente vertical

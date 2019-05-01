@@ -43,7 +43,8 @@ def main(input_video, start_frame, end_frame, vp_validation, debug):
             break
         img_h, img_w = frame.shape[:2]
 
-        vp = get_vanishing_point(frame)
+        vp = get_vanishing_point(frame) or vp
+
 
         if frame_index == start_frame:
             first_vp = vp
@@ -57,7 +58,6 @@ def main(input_video, start_frame, end_frame, vp_validation, debug):
         # frame = field_detector.detect_field(frame, first_vp)
 
         frame = field_detector.detect_field(frame, vp)
-
         if (frame_index-start_frame) % Constants.yolo_frame_period == 0:
             players_bbs = player_detector.detect_with_yolo(frame, frame_index == start_frame)
             player_tracker.track_players(players_bbs, frame)
