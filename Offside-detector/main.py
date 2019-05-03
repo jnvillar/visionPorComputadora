@@ -17,13 +17,12 @@ import click
 @click.option("--end_frame", default=45, help="End frame", show_default=True)
 @click.option("--vp_validation", default=False, help="Validate vanishing point using the last vp calculated", show_default=True)
 @click.option("--debug", default=True, help="Should display debug info", show_default=True)
-@click.option("--goalkeeper_tolerance", default=0.5, help="Tolerance for removing goalkeeper", show_default=True)
-def main(input_video, start_frame, end_frame, vp_validation, debug, goalkeeper_tolerance):
+def main(input_video, start_frame, end_frame, vp_validation, debug):
     Constants.debug_main = debug
     storer = Storer()
     storer.use_last_yolo_result(input_video, start_frame)
     field_detector = FieldDetector()
-    classifier = Classifier(goalkeeper_tolerance)
+    classifier = Classifier()
     drawer = Drawer()
     player_detector = PlayerDetector()
     player_tracker = PlayerTracker()
