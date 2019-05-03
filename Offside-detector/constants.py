@@ -8,5 +8,5 @@ class Constants:
     yolo_debug = True
 
     ## colors in bgr
-    yellow = (255, 255, 0)
+    yellow = (0, 255, 255)
     black = (0, 0, 0)
