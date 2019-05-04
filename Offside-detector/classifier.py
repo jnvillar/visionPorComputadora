@@ -4,18 +4,17 @@ from matplotlib import pyplot as plt
 from constants import Constants
 from drawer import Drawer
 import statistics
-
+import math
 
 class Classifier:
 
-    def __init__(self, goalkeeper_tolerance):
+    def __init__(self):
         self.player_histograms = []
         self.buckets_per_color = 200
         self.teams_set = False
         self.attacking_idx = 0
         self.teams = []
         self.drawer = Drawer()
-        self.goalkeeper_tolerance = goalkeeper_tolerance
 
     def restart(self):
         self.player_histograms = []
@@ -133,7 +132,7 @@ class Classifier:
 
     def get_attacking_player_index(self, frame):
         plt.imshow(frame)
-        points = plt.ginput(100, show_clicks=True, timeout=8)
+        points = plt.ginput(1, show_clicks=True, timeout=60)
 
         for i in plt.get_fignums():
             plt.close(i)
@@ -185,27 +184,32 @@ class Classifier:
         return player, previous_team
 
     def distance_between_colors(self, one_color, another_color):
-        x = abs(one_color[0] - another_color[0])
-        y = abs(one_color[1] - another_color[1])
-        z = abs(one_color[2] - another_color[2])
-        return x + y + z
+        x = (one_color[0] - another_color[0])**2
+        y = (one_color[1] - another_color[1])**2
+        z = (one_color[2] - another_color[2])**2
+        return math.sqrt(x + y + z)
 
     def add_distance_to_color(self, frame, player_bb, color):
+        
         distance_to_color = 0
 
         x = int(player_bb['bb'][0])
         y = int(player_bb['bb'][1])
         w = int(player_bb['bb'][2])
         h = int(player_bb['bb'][3])
-
+        
+        
         initial_x = int(x - (w / 2))
         initial_y = int(y - (h / 2))
 
+        count = 0
         for j in range(initial_y, initial_y + h):
             for i in range(initial_x, initial_x + w):
-                distance_to_color += self.distance_between_colors(frame[j, i], color)
+                
+                if self.distance_between_colors(frame[j, i], color) < 100:
+                    count +=1
 
-        player_bb['distance_to_color'] = distance_to_color
+        player_bb['distance_to_color'] = count/float(h*w)
         return player_bb
 
     def median_to_color(self, player_bbs):
@@ -213,21 +217,24 @@ class Classifier:
         return statistics.median(distances_to_color)
 
     def delete_closest_to_color(self, frame, player_bbs, color, tolerance=True):
+        is_deleted = False
         player_bbs_with_distances_to_color = []
         for player_bb in player_bbs:
             player_bbs_with_distances_to_color.append(self.add_distance_to_color(frame, player_bb, color))
 
-        player_bbs_with_distances_to_color.sort(key=lambda x: x['distance_to_color'])
+        player_bbs_with_distances_to_color.sort(key=lambda x: -x['distance_to_color'])
 
         if not tolerance:
             return player_bbs_with_distances_to_color.pop(0)
 
         median_to_color = self.median_to_color(player_bbs_with_distances_to_color)
-        if player_bbs_with_distances_to_color[0]['distance_to_color'] < (median_to_color * self.goalkeeper_tolerance):
+
+        if player_bbs_with_distances_to_color[0]['distance_to_color'] > 0.075:
             if Constants.debug_classifier: print('classifier: deleted closest to color', color)
             player_bbs_with_distances_to_color.pop(0)
+            is_deleted = True
 
-        return player_bbs_with_distances_to_color
+        return player_bbs_with_distances_to_color, is_deleted
 
     def calculate_teams(self, frame, previous_bbs=[], outliers=0):
         try:
@@ -236,8 +243,10 @@ class Classifier:
                 self.get_attacking_player_index(frame)
 
             # tries to delete referee , it may delete nothing
-            players_bb = self.delete_closest_to_color(frame, players_bb, Constants.yellow)
-            players_bb = self.delete_closest_to_color(frame, players_bb, Constants.black)
+            has_deleted = True
+            while has_deleted:
+                 players_bb, has_deleted = self.delete_closest_to_color(frame, players_bb, Constants.yellow) 
+            #players_bb = self.delete_closest_to_color(frame, players_bb, Constants.black)
 
             # delete one outlier to delete goalkeeper, it always deletes something
             distances = self.calculate_distances(players_bb)
