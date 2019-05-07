@@ -3,6 +3,7 @@ import cv2
 import random
 import pickle
 from constants import Constants
+from player_tracker import should_track_player
 from store import Storer
 
 def sample(probs):
@@ -196,6 +197,7 @@ class PlayerDetector(object):
         res = [r for r in res if r[0] == 'person']
         res = [r for r in res if r[1] > 0.6]
         res = [r for r in res if r[2][3] < 200]  ## si tiene mas de 200 de ancho, entonces no es un jugador.
+        res = [r for r in res if should_track_player(frame, r[2])]  ## si esta muy cerca del borde, no lo tomamos en cuenta
 
         if first_frame:
             self.storer.store_yolo_result(res)
