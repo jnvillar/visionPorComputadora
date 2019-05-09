@@ -14,7 +14,7 @@ import click
 @click.command()
 @click.option("--input_video", default='video', help="Name of video to process", show_default=True)
 @click.option("--start_frame", default=0, help="Start frame", show_default=True)
-@click.option("--end_frame", default=45, help="End frame", show_default=True)
+@click.option("--end_frame", default=100000000, help="End frame", show_default=True)
 @click.option("--vp_validation", default=False, help="Validate vanishing point using the last vp calculated", show_default=True)
 @click.option("--debug", default=True, help="Should display debug info", show_default=True)
 @click.option("--attack_team", default=None, help="The attacking team", show_default=True)

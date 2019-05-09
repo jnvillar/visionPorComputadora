@@ -22,7 +22,7 @@ class Drawer:
         w = int(bounding_box[2] / 2)
         h = int(bounding_box[3] / 2)
         cv2.rectangle(frame, (x - w, y - h), (x + w, y + h), color, 2)
-        cv2.putText(frame, str(self.frame), (x, h), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (255, 255, 255),lineType=cv2.LINE_AA)
+        #cv2.putText(frame, str(self.frame), (x, h), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (255, 255, 255),lineType=cv2.LINE_AA)
 
     def bigger_bb(self, frame, bounding_box, team):
         color = (0, 0, 255) if team == Constants.attacking_team else (0, 255, 0)
