@@ -7,6 +7,11 @@ CSRT_PARAMS = cv2.FileStorage("CSRT_params.json", cv2.FileStorage_READ)
 KCF_PARAMS = cv2.FileStorage("KCF_params.json", cv2.FileStorage_READ)
 RANDOM_FIELD_POINT = (280,501)
 
+def should_track_player(frame, bounding_box):
+        heigth, width = frame.shape[:2]
+        (x, y, w, h) = bounding_box
+        return not (width-x < BOUNDING_BOX_END_LIMIT or x < BOUNDING_BOX_END_LIMIT)
+
 class PlayerTracker:
 
     def __init__(self, debug=False):
@@ -14,7 +19,10 @@ class PlayerTracker:
         self.player_trackers = []
 
     def _update_bounding_box(self, frame, tracker, send_end):
-        send_end.send(tracker.update(frame))
+        if tracker is None:
+            send_end.send(None)    
+        else:
+            send_end.send(tracker.update(frame))
 
     def load_players(self, frame, bounding_boxes):
         self.player_trackers = []
@@ -51,7 +59,7 @@ class PlayerTracker:
             if success:
                 (x, y, w, h) = [int(v) for v in box]
                 ## Saco a los jugadores que estan muy cerca del borde
-                if not self.should_track_player(frame, (x, y, w, h)):
+                if not should_track_player(frame, (x, y, w, h)):
                     player_track_to_remove.append(i)
                     bounding_boxes.append(None)
                 else:
@@ -61,18 +69,9 @@ class PlayerTracker:
                 bounding_boxes.append(None)
         
         
-        self.player_trackers = [tracker for i, tracker in enumerate(self.player_trackers) if i not in player_track_to_remove]
         return bounding_boxes
 
-    def should_track_player(self, frame, bounding_box):
-        heigth, width = frame.shape[:2]
-        (x, y, w, h) = bounding_box
-        return not (width-x < BOUNDING_BOX_END_LIMIT or x < BOUNDING_BOX_END_LIMIT)
-
     def track_players(self, res, frame):
-        res = [r for r in res if self.should_track_player(frame, r[
-            2])]  ## si esta muy cerca del borde, no lo tomamos en cuenta
-
         self.load_players(frame, res)
 
     def get_leftmost_player(self, bounding_boxes, vanishing_point, team, teams):

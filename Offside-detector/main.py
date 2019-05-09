@@ -17,16 +17,22 @@ import click
 @click.option("--end_frame", default=45, help="End frame", show_default=True)
 @click.option("--vp_validation", default=False, help="Validate vanishing point using the last vp calculated", show_default=True)
 @click.option("--debug", default=True, help="Should display debug info", show_default=True)
-def main(input_video, start_frame, end_frame, vp_validation, debug):
+@click.option("--attack_team", default=None, help="The attacking team", show_default=True)
+@click.option("--defense_team", default=None, help="The defending team", show_default=True)
+def main(input_video, start_frame, end_frame, vp_validation, debug, attack_team, defense_team):
     storer = Storer()
     storer.use_last_yolo_result(input_video, start_frame)
     field_detector = FieldDetector()
-    classifier = Classifier()
+    classifier = Classifier(attack_team, defense_team)
     drawer = Drawer()
     player_detector = PlayerDetector()
     player_tracker = PlayerTracker()
     cap = cv2.VideoCapture('./videos/{}.mp4'.format(input_video))
     out = cv2.VideoWriter('./videos/output-{}.mp4'.format(input_video), 0x7634706d, 30.0, (1280, 720))
+
+    automatic_team_detection = False
+    if attack_team is None or defense_team is None:
+        automatic_team_detection = True
 
     if not cap.isOpened():
         raise Exception('Video cound not be opened')
@@ -60,14 +66,19 @@ def main(input_video, start_frame, end_frame, vp_validation, debug):
         frame = field_detector.detect_field(frame, vp)
         if (frame_index-start_frame) % Constants.yolo_frame_period == 0:
             players_bbs = player_detector.detect_with_yolo(frame, frame_index == start_frame)
+            
             player_tracker.track_players(players_bbs, frame)
-            classifier.generate_histograms(players_bbs, frame)
-            teams = classifier.calculate_teams(frame, bounding_boxes, outliers=1)
+            if automatic_team_detection:
+                classifier.generate_histograms(players_bbs, frame)
+                teams = classifier.calculate_teams(frame, bounding_boxes, outliers=0)
+            else:
+                teams = classifier.calculate_teams_from_params(frame, players_bbs)
             drawer.draw_all_players(players_bbs, teams, frame)
             out.write(frame)
             continue
-
+        
         bounding_boxes = player_tracker.update(frame)
+        
         drawer.update_players(frame, bounding_boxes, teams)
         leftmost_player = player_tracker.get_leftmost_player(bounding_boxes, vp, Constants.defending_team, teams)
         

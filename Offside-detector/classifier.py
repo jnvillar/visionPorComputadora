@@ -8,13 +8,15 @@ import math
 
 class Classifier:
 
-    def __init__(self):
+    def __init__(self, attack_team, defense_team):
         self.player_histograms = []
         self.buckets_per_color = 200
         self.teams_set = False
         self.attacking_idx = 0
         self.teams = []
         self.drawer = Drawer()
+        self.attack_team = attack_team
+        self.defense_team = defense_team
 
     def restart(self):
         self.player_histograms = []
@@ -236,6 +238,50 @@ class Classifier:
 
         return player_bbs_with_distances_to_color, is_deleted
 
+    def _is_color(self, pixel, color_range):
+        COLOR_MIN, COLOR_MAX = getattr(Constants, '{}_COLOR_RANGE'.format(color_range.upper()))
+        pixel = cv2.cvtColor(np.uint8([[[pixel[0], pixel[1], pixel[2]]]]), cv2.COLOR_BGR2HSV)
+        return (COLOR_MIN[0] <= pixel[0][0][0] <= COLOR_MAX[0] 
+            and COLOR_MIN[1] <= pixel[0][0][1] <= COLOR_MAX[1] 
+            and COLOR_MIN[2] <= pixel[0][0][2] <= COLOR_MAX[2]
+        )
+
+    def get_color_score(self, frame, player_bb, color_range):
+        
+        x = int(player_bb[2][0])
+        y = int(player_bb[2][1])
+        w = int(player_bb[2][2])
+        h = int(player_bb[2][3])
+                
+        initial_x = int(x - (w / 2))
+        initial_y = int(y - (h / 2))
+
+        count = 0
+        for j in range(initial_y, initial_y + h):
+            for i in range(initial_x, initial_x + w):
+                if self._is_color(frame[j, i], color_range):
+                    count +=1
+
+        return count
+
+    def calculate_teams_from_params(self, frame, bounding_boxes):
+        THRESHOLD = 30
+        res = []
+        for i in range(len(bounding_boxes)):
+            attacking_value = self.get_color_score(frame, bounding_boxes[i], self.attack_team)
+            defending_value = self.get_color_score(frame, bounding_boxes[i], self.defense_team)
+            print('attacking_value', attacking_value)
+            print('defending_value', defending_value)
+            
+            if max(attacking_value, defending_value) < THRESHOLD:
+                team = None
+            elif attacking_value > defending_value:
+                team = Constants.attacking_team
+            else:
+                team = Constants.defending_team
+            res.append(team)
+        return res
+
     def calculate_teams(self, frame, previous_bbs=[], outliers=0):
         try:
             players_bb = list(self.player_histograms)
@@ -285,7 +331,7 @@ class Classifier:
         else:
             # if teams were set previously, find closest bounding box and assign same team
             player, previous_team = self.closest_player_with_team(self.player_histograms, previous_bbs)
-            if Constants.debug_classifier: self.drawer.bigger_bb(frame, player['bb'], previous_team)
+            #if Constants.debug_classifier: self.drawer.bigger_bb(frame, player['bb'], previous_team)
             if (player['bb'] in attacking_team and previous_team is Constants.defending_team) or (
                     player['bb'] in defending_team and previous_team is Constants.attacking_team):
                 if Constants.debug_classifier: print('cambio equipos')
