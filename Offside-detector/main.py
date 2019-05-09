@@ -66,7 +66,8 @@ def main(input_video, start_frame, end_frame, vp_validation, debug, attack_team,
         frame = field_detector.detect_field(frame, vp)
         if (frame_index-start_frame) % Constants.yolo_frame_period == 0:
             players_bbs = player_detector.detect_with_yolo(frame, frame_index == start_frame)
-            
+            players_bbs = field_detector.filter_outside_bounding_boxes(players_bbs)
+
             player_tracker.track_players(players_bbs, frame)
             if automatic_team_detection:
                 classifier.generate_histograms(players_bbs, frame)
